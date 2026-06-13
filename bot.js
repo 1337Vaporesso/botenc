@@ -58,22 +58,22 @@ const L = {
     title: '\u2728 <b>EncodeX Premium</b>',
     desc: 'Bypass TikTok compression \u2022 Watermark <code>@encodexhd</code>\nUnlimited videos \u2022 No limits \u2022 Lifetime',
     select: '<b>Select:</b>',
-    lifetime: '\ud83d\udc51 Lifetime \u2014 50 USDT',
-    lifetime_stars: '\ud83d\udc51 Lifetime \u2014 50 USDT / 150 \u2b50',
+    lifetime: '\ud83d\udc51 Lifetime \u2014 5 USDT',
+    lifetime_stars: '\ud83d\udc51 Lifetime \u2014 5 USDT / 150 \u2b50',
     plan_title: '\ud83d\udc51 <b>Lifetime Access</b>',
-    plan_price: '\ud83d\udcb0 <b>50 USDT</b>' + (PROVIDER_TOKEN ? ' / <b>150 \u2b50</b>' : ''),
+    plan_price: '\ud83d\udcb0 <b>5 USDT</b>' + (PROVIDER_TOKEN ? ' / <b>150 \u2b50</b>' : ''),
     plan_desc: '<i>One-time payment \u2022 Unlimited usage \u2022 No expiry</i>',
     choose_payment: '<i>Choose payment:</i>',
     stars: '\u2b50 Telegram Stars',
     crypto: '\ud83d\udc8e CryptoBot (USDT)',
     back: '\u2190 Back',
     creating: '\u23f3 <b>Creating invoice...</b>',
-    pay_stars: '\ud83d\udcb3 Pay 150 \u2b50',
+    pay_stars: '\ud83d\udcb3 Pay 50 \u2b50',
     stars_pay_title: '\u2b50 Telegram Stars',
     stars_pay_info: '<i>Tap the button to complete payment</i>',
     crypto_pay_title: '\ud83d\udc8e CryptoBot (USDT)',
     crypto_pay_info: '<i>Tap the button to pay with CryptoBot</i>',
-    pay_usdt: '\ud83d\udcb3 Pay 50 USDT',
+    pay_usdt: '\ud83d\udcb3 Pay 5 USDT',
     success: '\u2705 <b>Payment Successful!</b>',
     success_info: 'Your key: <code>{key}</code>\n\nOpen <b>EncodeX</b> \u2192 <b>Profile</b> \u2192 <b>Activate</b>',
     timeout: '\u274c <b>Timeout</b>\nCryptoBot API did not respond in 15s',
@@ -141,9 +141,9 @@ const L = {
     desc: '\u041e\u0431\u0445\u043e\u0434 \u0441\u0436\u0430\u0442\u0438\u044f TikTok \u2022 \u0412\u0430\u0442\u0435\u0440\u043c\u0430\u0440\u043a <code>@encodexhd</code>\n\u0411\u0435\u0437\u043b\u0438\u043c\u0438\u0442\u043d\u043e \u2022 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430',
     select: '<b>\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435:</b>',
     lifetime: '\ud83d\udc51 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430 \u2014 50 USDT',
-    lifetime_stars: '\ud83d\udc51 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430 \u2014 50 USDT / 150 \u2b50',
+    lifetime_stars: '\ud83d\udc51 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430 \u2014 5 USDT / 50 \u2b50',
     plan_title: '\ud83d\udc51 <b>\u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430</b>',
-    plan_price: '\ud83d\udcb0 <b>50 USDT</b>' + (PROVIDER_TOKEN ? ' / <b>150 \u2b50</b>' : ''),
+    plan_price: '\ud83d\udcb0 <b>5 USDT</b>' + (PROVIDER_TOKEN ? ' / <b>150 \u2b50</b>' : ''),
     plan_desc: '<i>\u041e\u0434\u0438\u043d \u043f\u043b\u0430\u0442\u0435\u0436 \u2022 \u0411\u0435\u0437 \u043b\u0438\u043c\u0438\u0442\u043e\u0432 \u2022 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430</i>',
     choose_payment: '<i>\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u043f\u043b\u0430\u0442\u0443:</i>',
     stars: '\u2b50 Telegram Stars',
@@ -442,14 +442,14 @@ bot.callbackQuery(/^pay_stars_lifetime$/, async (ctx) => {
       'EncodeX Lifetime',
       'Premium lifetime key',
       'stars_lifetime_' + ctx.from.id, '', 'XTR',
-      [{ label: 'EncodeX Lifetime', amount: 150 }],
+      [{ label: 'EncodeX Lifetime', amount: 50 }],
       { provider_token: PROVIDER_TOKEN }
     );
     const kb = new InlineKeyboard()
       .url(t.pay_stars, invoice).row()
       .text(t.back, 'buy_lifetime');
     await ctx.editMessageText(
-      '<b>' + t.stars_pay_title + '</b>\n\n150 \u2B50\n\n' + t.stars_pay_info,
+      '<b>' + t.stars_pay_title + '</b>\n\n50 \u2B50\n\n' + t.stars_pay_info,
       { parse_mode: 'HTML', reply_markup: kb }
     );
   } catch (e) {
@@ -497,7 +497,7 @@ bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Crypto-Pay-API-Token': CRYPTOBOT_TOKEN },
       body: JSON.stringify({
-        asset: 'USDT', amount: 50,
+        asset: 'USDT', amount: 5,
         description: 'EncodeX Premium \u2014 Lifetime',
         paid_btn_name: 'openBot',
         paid_btn_url: 'https://t.me/' + (BOT_USERNAME || 'encodex_bot'),
@@ -518,7 +518,7 @@ bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
       .url(t.pay_usdt, data.result.bot_invoice_url).row()
       .text(t.back, 'buy_lifetime');
     await ctx.api.editMessageText(chatId, msgId,
-      '<b>' + t.crypto_pay_title + '</b>\n\n50 USDT\n\n' + t.crypto_pay_info,
+      '<b>' + t.crypto_pay_title + '</b>\n\n5 USDT\n\n' + t.crypto_pay_info,
       { parse_mode: 'HTML', reply_markup: kb }
     );
   } catch (e) {
