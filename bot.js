@@ -103,7 +103,7 @@ const L = {
     stats: '\ud83d\udcca <b>Stats:</b> {n}',
     genkeys: '\ud83d\udd11 <b>Generated 10 keys:</b>\n<code>{keys}</code>',
     approved: 'Approved payment #{id}. Key sent to user.',
-    rejected: 'Rejected payment #{id}.'
+    rejected: 'Rejected payment #{id}.',
 
     // Profile
     profile_title: '\ud83d\udc64 <b>Your Profile</b>',
@@ -200,7 +200,7 @@ const L = {
     stats: '\ud83d\udcca <b>\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430:</b> {n}',
     genkeys: '\ud83d\udd11 <b>\u0421\u0433\u0435\u043d\u0435\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043e 10 \u043a\u043b\u044e\u0447\u0435\u0439:</b>\n<code>{keys}</code>',
     approved: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d. \u041a\u043b\u044e\u0447 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d.',
-    rejected: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043e\u0442\u043a\u043b\u043e\u043d\u0451\u043d.'
+    rejected: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043e\u0442\u043a\u043b\u043e\u043d\u0451\u043d.',
 
     profile_title: '\ud83d\udc64 <b>\u0412\u0430\u0448 \u043f\u0440\u043e\u0444\u0438\u043b\u044c</b>',
     profile_id: '\ud83d\udd11 ID: <code>{id}</code>',
