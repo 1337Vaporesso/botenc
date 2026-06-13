@@ -150,13 +150,11 @@ app.post('/cryptobot-webhook', async (req, res) => {
   res.sendStatus(200);
 });
 
-// Telegram webhook endpoint
-app.post('/webhook', webhookCallback(bot, 'express'));
-
 app.get('/', (req, res) => res.send('EncodeX Bot'));
 
 // Webhook mode
 if (WEBHOOK_DOMAIN) {
+  app.post('/webhook', webhookCallback(bot, 'express'));
   bot.api.setWebhook(WEBHOOK_DOMAIN + '/webhook', { drop_pending_updates: true }).then(() => {
     console.log('Webhook set to ' + WEBHOOK_DOMAIN + '/webhook');
     app.listen(PORT, () => console.log('Bot on port ' + PORT));
