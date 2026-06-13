@@ -116,11 +116,11 @@ const L = {
 
     // Support
     support_title: '\ud83d\udd27 <b>Support</b>',
-    support_text: 'Having issues? Contact us:\n\n\ud83d\udcac @encodex_support\n\u2709\ufe0f <a href="https://t.me/encodex_support">Open Chat</a>\n\nWe reply within 24 hours.',
+    support_text: 'Having issues? Contact us:\n\n\ud83d\udcac @plopaja\n\u2709\ufe0f <a href="https://t.me/plopaja">Open Chat</a>\n\nWe reply within 24 hours.',
 
     // Community
     community_title: '\ud83c\udf0d <b>Community</b>',
-    community_text: 'Join our community!\n\n\ud83d\udc65 <a href="https://t.me/encodex_chat">Chat</a>\n\ud83d\udce2 <a href="https://t.me/encodex_news">News Channel</a>'
+    community_text: 'Join our community!\n\n\ud83d\udc65 <a href="https://t.me/encodexchat">Chat</a>\n\ud83d\udce2 <a href="https://t.me/encodexhd">News Channel</a>'
   },
   ru: {
     lang_pick: '\ud83c\udf10 <b>\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u044f\u0437\u044b\u043a</b>\n\n\ud83c\uddfa\ud83c\uddf8 Choose your language',
@@ -193,10 +193,10 @@ const L = {
     faq_a4: 'CryptoBot (USDT) \u0438 Telegram Stars.',
 
     support_title: '\ud83d\udd27 <b>\u041f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0430</b>',
-    support_text: '\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u044b? \u0421\u0432\u044f\u0436\u0438\u0442\u0435\u0441\u044c \u0441 \u043d\u0430\u043c\u0438:\n\n\ud83d\udcac @encodex_support\n\u2709\ufe0f <a href="https://t.me/encodex_support">\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0447\u0430\u0442</a>\n\n\u041e\u0442\u0432\u0435\u0447\u0430\u0435\u043c \u0432 \u0442\u0435\u0447\u0435\u043d\u0438\u0438 24 \u0447\u0430\u0441\u043e\u0432.',
+    support_text: '\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u044b? \u0421\u0432\u044f\u0436\u0438\u0442\u0435\u0441\u044c \u0441 \u043d\u0430\u043c\u0438:\n\n\ud83d\udcac @plopaja\n\u2709\ufe0f <a href="https://t.me/plopaja">\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0447\u0430\u0442</a>\n\n\u041e\u0442\u0432\u0435\u0447\u0430\u0435\u043c \u0432 \u0442\u0435\u0447\u0435\u043d\u0438\u0438 24 \u0447\u0430\u0441\u043e\u0432.',
 
     community_title: '\ud83c\udf0d <b>\u0421\u043e\u043e\u0431\u0449\u0435\u0441\u0442\u0432\u043e</b>',
-    community_text: '\u041f\u0440\u0438\u0441\u043e\u0435\u0434\u0438\u043d\u044f\u0439\u0442\u0435\u0441\u044c!\n\n\ud83d\udc65 <a href="https://t.me/encodex_chat">\u0427\u0430\u0442</a>\n\ud83d\udce2 <a href="https://t.me/encodex_news">\u041a\u0430\u043d\u0430\u043b \u043d\u043e\u0432\u043e\u0441\u0442\u0435\u0439</a>'
+    community_text: '\u041f\u0440\u0438\u0441\u043e\u0435\u0434\u0438\u043d\u044f\u0439\u0442\u0435\u0441\u044c!\n\n\ud83d\udc65 <a href="https://t.me/encodexchat">\u0427\u0430\u0442</a>\n\ud83d\udce2 <a href="https://t.me/encodexhd">\u041a\u0430\u043d\u0430\u043b \u043d\u043e\u0432\u043e\u0441\u0442\u0435\u0439</a>'
   }
 };
 
@@ -389,7 +389,7 @@ bot.callbackQuery(/^menu_support$/, async (ctx) => {
   const lang = getLang(ctx);
   const t = L[lang];
   const kb = new InlineKeyboard()
-    .url('\u2709\ufe0f ' + (lang === 'ru' ? '\u041d\u0430\u043f\u0438\u0441\u0430\u0442\u044c' : 'Contact'), 'https://t.me/encodex_support').row()
+    .url('\u2709\ufe0f ' + (lang === 'ru' ? '\u041d\u0430\u043f\u0438\u0441\u0430\u0442\u044c' : 'Contact'), 'https://t.me/plopaja').row()
     .text(t.back, 'menu_main');
   await ctx.editMessageText(
     t.support_title + '\n\n' + t.support_text,
@@ -404,8 +404,8 @@ bot.callbackQuery(/^menu_community$/, async (ctx) => {
   const lang = getLang(ctx);
   const t = L[lang];
   const kb = new InlineKeyboard()
-    .url('\ud83d\udc65 ' + (lang === 'ru' ? '\u0427\u0430\u0442' : 'Chat'), 'https://t.me/encodex_chat')
-    .url('\ud83d\udce2 ' + (lang === 'ru' ? '\u041d\u043e\u0432\u043e\u0441\u0442\u0438' : 'News'), 'https://t.me/encodex_news').row()
+    .url('\ud83d\udc65 ' + (lang === 'ru' ? '\u0427\u0430\u0442' : 'Chat'), 'https://t.me/encodexchat')
+    .url('\ud83d\udce2 ' + (lang === 'ru' ? '\u041d\u043e\u0432\u043e\u0441\u0442\u0438' : 'News'), 'https://t.me/encodexhd').row()
     .text(t.back, 'menu_main');
   await ctx.editMessageText(
     t.community_title + '\n\n' + t.community_text,
