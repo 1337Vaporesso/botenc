@@ -127,6 +127,15 @@ bot.callbackQuery(/pay_crypto_(.+)/, async (ctx) => {
   }
   const plan = PLANS[ctx.match[1]];
   if (!plan) { await ctx.answerCallbackQuery(); return; }
+  await ctx.answerCallbackQuery();
+
+  const msg = await ctx.reply(
+    '\u23F3 <b>Creating invoice...</b>',
+    { parse_mode: 'HTML' }
+  );
+  const chatId = msg.chat.id;
+  const msgId = msg.message_id;
+
   try {
     const payload = 'crypto_' + plan.label + '_' + ctx.from.id;
     const body = {
@@ -137,43 +146,43 @@ bot.callbackQuery(/pay_crypto_(.+)/, async (ctx) => {
       paid_btn_url: 'https://t.me/' + (BOT_USERNAME || 'encodex_bot'),
       payload: payload
     };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     const res = await fetch('https://pay.crypt.bot/api/createInvoice', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Crypto-Pay-API-Key': CRYPTOBOT_TOKEN
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      signal: controller.signal
     });
+    clearTimeout(timer);
     const data = await res.json();
     if (!data.ok) {
-      await ctx.answerCallbackQuery();
-      await ctx.reply(
-        '\u274C <b>CryptoBot Error</b>\n<code>' + escapeHtml(JSON.stringify(data, null, 2)) + '</code>',
+      await ctx.api.editMessageText(chatId, msgId,
+        '\u274C <b>CryptoBot Error</b>\n<code>' + escapeHtml(JSON.stringify(data)) + '</code>',
         { parse_mode: 'HTML' }
-      );
+      ).catch(() => {});
       return;
     }
     const kb = new InlineKeyboard()
       .url('\uD83D\uDCB3 Pay ' + plan.usdt + ' USDT', data.result.bot_invoice_url)
       .row()
-      .text('\u2190 Back', 'back');
-    await ctx.editMessageText(
+      .text('\u2190 Back to plans', 'back');
+    await ctx.api.editMessageText(chatId, msgId,
       '<b>\uD83D\uDC8E CryptoBot (USDT)</b>\n\n'
       + 'Plan: <b>' + plan.label + '</b>\n'
       + 'Price: <b>' + plan.usdt + ' USDT</b>\n\n'
-      + '<i>Click the button below to pay with CryptoBot:</i>',
+      + '<i>Click the button below to pay:</i>',
       { parse_mode: 'HTML', reply_markup: kb }
     );
   } catch (e) {
-    await ctx.answerCallbackQuery();
-    await ctx.reply(
-      '\u274C <b>Exception</b>\n<code>' + escapeHtml(e.message || String(e)) + '</code>',
-      { parse_mode: 'HTML' }
-    );
-    return;
+    const text = e.name === 'AbortError'
+      ? '\u274C <b>Timeout</b>\nCryptoBot API did not respond in 15s'
+      : '\u274C <b>Exception</b>\n<code>' + escapeHtml(e.message || String(e)) + '</code>';
+    await ctx.api.editMessageText(chatId, msgId, text, { parse_mode: 'HTML' }).catch(() => {});
   }
-  await ctx.answerCallbackQuery();
 });
 
 // ── Back button ──────────────────────────────────────
