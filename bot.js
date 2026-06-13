@@ -155,27 +155,22 @@ app.post('/webhook', webhookCallback(bot, 'express'));
 
 app.get('/', (req, res) => res.send('EncodeX Bot'));
 
-// Запуск: устанавливаем webhook и стартуем
-async function start() {
-  const domain = WEBHOOK_DOMAIN || (process.env.RAILWAY_PUBLIC_DOMAIN ? 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN : null);
-  if (domain) {
-    await bot.api.setWebhook(domain + '/webhook', { drop_pending_updates: true });
-    console.log('Webhook set to ' + domain + '/webhook');
-  } else {
-    // Fallback: polling
-    await bot.api.deleteWebhook({ drop_pending_updates: true });
-    bot.start();
-    console.log('Bot started in polling mode');
-  }
-}
-
-start().then(() => {
-  app.listen(PORT, () => console.log('Bot on port ' + PORT));
-}).catch(e => {
-  console.error('Start error:', e.message);
-  // Last resort: polling
+// Webhook mode
+if (WEBHOOK_DOMAIN) {
+  bot.api.setWebhook(WEBHOOK_DOMAIN + '/webhook', { drop_pending_updates: true }).then(() => {
+    console.log('Webhook set to ' + WEBHOOK_DOMAIN + '/webhook');
+    app.listen(PORT, () => console.log('Bot on port ' + PORT));
+  }).catch(e => {
+    console.error('Webhook setup failed:', e.message);
+    process.exit(1);
+  });
+} else {
+  // Polling mode
   bot.api.deleteWebhook({ drop_pending_updates: true }).then(() => {
     bot.start();
     app.listen(PORT, () => console.log('Bot on port ' + PORT));
+  }).catch(e => {
+    console.error('Polling setup failed:', e.message);
+    process.exit(1);
   });
-});
+}
