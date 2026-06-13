@@ -81,29 +81,33 @@ bot.on('message:successful_payment', async (ctx) => {
 });
 
 bot.callbackQuery(/pay_crypto_(.+)/, async (ctx) => {
-  if (!CRYPTOBOT_TOKEN) return;
+  if (!CRYPTOBOT_TOKEN) {
+    await ctx.editMessageText('❌ CRYPTOBOT_TOKEN not set in Railway Variables');
+    return;
+  }
   const plan = PLANS[ctx.match[1]];
   if (!plan) return;
   try {
+    const body = JSON.stringify({
+      asset: 'USDT', amount: plan.usdt,
+      description: 'EncodeX Premium — ' + plan.label,
+      paid_btn_name: 'openBot',
+      paid_btn_url: 'https://t.me/' + BOT_USERNAME,
+      payload: 'crypto_' + plan.label + '_' + ctx.from.id
+    });
     const res = await fetch('https://pay.crypt.bot/api/createInvoice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Crypto-Pay-API-Key': CRYPTOBOT_TOKEN },
-      body: JSON.stringify({
-        asset: 'USDT', amount: plan.usdt,
-        description: 'EncodeX Premium — ' + plan.label,
-        paid_btn_name: 'openBot',
-        paid_btn_url: 'https://t.me/' + BOT_USERNAME,
-        payload: 'crypto_' + plan.label + '_' + ctx.from.id
-      })
+      body: body
     });
     const data = await res.json();
     if (!data.ok) {
-      await ctx.editMessageText('CryptoBot error: ' + (data.error || 'unknown'));
+      await ctx.reply('❌ CryptoBot error:\n' + JSON.stringify(data, null, 2));
       return;
     }
     await ctx.editMessageText('💎 ' + plan.usdt + ' USDT\n\nPay:', { reply_markup: new InlineKeyboard().url('💳 Pay', data.result.bot_invoice_url) });
   } catch (e) {
-    try { await ctx.editMessageText('Payment error. Check CRYPTOBOT_TOKEN'); } catch {}
+    await ctx.reply('❌ Exception:\n' + (e.message || e));
   }
   await ctx.answerCallbackQuery();
 });
