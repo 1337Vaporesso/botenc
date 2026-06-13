@@ -61,7 +61,7 @@ const L = {
     lifetime: '\ud83d\udc51 Lifetime \u2014 5 USDT',
     lifetime_stars: '\ud83d\udc51 Lifetime \u2014 5 USDT / 150 \u2b50',
     plan_title: '\ud83d\udc51 <b>Lifetime Access</b>',
-    plan_price: '\ud83d\udcb0 <b>5 USDT</b>' + (PROVIDER_TOKEN ? ' / <b>150 \u2b50</b>' : ''),
+    plan_price: '\ud83d\udcb0 <b>5 USDT</b> / <b>50 \u2b50</b>',
     plan_desc: '<i>One-time payment \u2022 Unlimited usage \u2022 No expiry</i>',
     choose_payment: '<i>Choose payment:</i>',
     stars: '\u2b50 Telegram Stars',
@@ -147,7 +147,7 @@ const L = {
     lifetime: '\ud83d\udc51 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430 \u2014 50 USDT',
     lifetime_stars: '\ud83d\udc51 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430 \u2014 5 USDT / 50 \u2b50',
     plan_title: '\ud83d\udc51 <b>\u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430</b>',
-    plan_price: '\ud83d\udcb0 <b>5 USDT</b>' + (PROVIDER_TOKEN ? ' / <b>50 \u2b50</b>' : ''),
+    plan_price: '\ud83d\udcb0 <b>5 USDT</b> / <b>50 \u2b50</b>',
     plan_desc: '<i>\u041e\u0434\u0438\u043d \u043f\u043b\u0430\u0442\u0435\u0436 \u2022 \u0411\u0435\u0437 \u043b\u0438\u043c\u0438\u0442\u043e\u0432 \u2022 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430</i>',
     choose_payment: '<i>\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u043f\u043b\u0430\u0442\u0443:</i>',
     stars: '\u2b50 Telegram Stars',
@@ -293,15 +293,15 @@ bot.callbackQuery(/^menu_main$/, async (ctx) => {
   await ctx.answerCallbackQuery();
 });
 
-// ── Buy (redirect to existing buy_lifetime) ──────────
+// ── Proceed to Buy (always shows Stars) ─────────────
 
 bot.callbackQuery(/^menu_buy$/, async (ctx) => {
   await ctx.answerCallbackQuery();
   const lang = getLang(ctx);
   const t = L[lang];
   const kb = new InlineKeyboard();
-  if (PROVIDER_TOKEN) kb.text(t.stars, 'pay_stars_lifetime');
-  if (PROVIDER_TOKEN && CRYPTOBOT_TOKEN) kb.row();
+  kb.text(t.stars, 'pay_stars_lifetime');
+  if (CRYPTOBOT_TOKEN) kb.row();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   if (CRYPTOBOT_TOKEN) kb.text(t.card, 'pay_card_lifetime');
   kb.row().text(t.back, 'back_start');
@@ -428,8 +428,8 @@ bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
   const lang = getLang(ctx);
   const t = L[lang];
   const kb = new InlineKeyboard();
-  if (PROVIDER_TOKEN) kb.text(t.stars, 'pay_stars_lifetime');
-  if (PROVIDER_TOKEN && CRYPTOBOT_TOKEN) kb.row();
+  kb.text(t.stars, 'pay_stars_lifetime');
+  if (CRYPTOBOT_TOKEN) kb.row();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   if (CRYPTOBOT_TOKEN) kb.text(t.card, 'pay_card_lifetime');
   kb.row().text(t.back, 'back_start');
@@ -440,10 +440,9 @@ bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
   await ctx.answerCallbackQuery();
 });
 
-// ── Stars Payment (UNCHANGED) ────────────────────────
+// ── Stars Payment ────────────────────────────────────
 
 bot.callbackQuery(/^pay_stars_lifetime$/, async (ctx) => {
-  if (!PROVIDER_TOKEN) { await ctx.answerCallbackQuery(); return; }
   const lang = getLang(ctx);
   const t = L[lang];
   try {
@@ -451,8 +450,7 @@ bot.callbackQuery(/^pay_stars_lifetime$/, async (ctx) => {
       'EncodeX Lifetime',
       'Premium lifetime key',
       'stars_lifetime_' + ctx.from.id, '', 'XTR',
-      [{ label: 'EncodeX Lifetime', amount: 50 }],
-      { provider_token: PROVIDER_TOKEN }
+      [{ label: 'EncodeX Lifetime', amount: 50 }]
     );
     const kb = new InlineKeyboard()
       .url(t.pay_stars, invoice).row()
