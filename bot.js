@@ -9,6 +9,7 @@ const ADMIN_IDS = (process.env.ADMIN_IDS || '').split(',').map(Number);
 const PORT = process.env.PORT || 8080;
 const BOT_USERNAME = process.env.BOT_USERNAME || '';
 const WEBHOOK_DOMAIN = process.env.WEBHOOK_DOMAIN || '';
+const CARD_DETAILS = process.env.CARD_DETAILS || 'Card details not configured';
 
 function genKey() {
   const r = () => randomUUID().slice(0, 4).toUpperCase();
@@ -21,6 +22,11 @@ function saveKey(key, userId, name, method) {
   store.total++;
 }
 function getStats() { return '\uD83D\uDCCA Keys: ' + store.total; }
+
+// ── Pending payments (manual card transfer) ──────────
+const pendingPayments = new Map();
+let pendingIdCounter = 0;
+const awaitingReceipt = new Set();
 
 const bot = new Bot(BOT_TOKEN);
 
@@ -78,6 +84,15 @@ const L = {
     card_pay_title: '\ud83d\udcb3 Bank Card',
     card_pay_info: '<i>Pay with Visa/Mastercard via CryptoBot</i>',
     pay_card: '\ud83d\udcb3 Pay 5 USD',
+    card_transfer: '\ud83c\udfe6 Card Transfer (Manual)',
+    card_transfer_title: '\ud83c\udfe6 Card Transfer',
+    card_transfer_info: 'Send <b>5 USD</b> to the card below, then tap "I paid":\n\n<code>{details}</code>',
+    card_transfer_sent: '\u2705 I paid',
+    card_transfer_await: '\u23f3 Payment <b>#{id}</b> is pending.\n\nAdmin will verify and send your key shortly.',
+    card_transfer_approve: '\u2705 Approve',
+    card_transfer_reject: '\u274c Reject',
+    pending_title: '\u23f3 <b>Pending payments:</b>',
+    pending_empty: 'No pending payments.',
     success: '\u2705 <b>Payment Successful!</b>',
     success_info: 'Your key: <code>{key}</code>\n\nOpen <b>EncodeX</b> \u2192 <b>Profile</b> \u2192 <b>Activate</b>',
     timeout: '\u274c <b>Timeout</b>\nCryptoBot API did not respond in 15s',
@@ -87,6 +102,8 @@ const L = {
     err_crypto: '\u274c CryptoBot error:\n<code>{data}</code>',
     stats: '\ud83d\udcca <b>Stats:</b> {n}',
     genkeys: '\ud83d\udd11 <b>Generated 10 keys:</b>\n<code>{keys}</code>',
+    approved: 'Approved payment #{id}. Key sent to user.',
+    rejected: 'Rejected payment #{id}.'
 
     // Profile
     profile_title: '\ud83d\udc64 <b>Your Profile</b>',
@@ -164,6 +181,15 @@ const L = {
     card_pay_title: '\ud83d\udcb3 \u0411\u0430\u043d\u043a\u043e\u0432\u0441\u043a\u0430\u044f \u043a\u0430\u0440\u0442\u0430',
     card_pay_info: '<i>\u041e\u043f\u043b\u0430\u0442\u0430 Visa/Mastercard \u0447\u0435\u0440\u0435\u0437 CryptoBot</i>',
     pay_card: '\ud83d\udcb3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c 5 USD',
+    card_transfer: '\ud83c\udfe6 \u041f\u0435\u0440\u0435\u0432\u043e\u0434 \u043d\u0430 \u043a\u0430\u0440\u0442\u0443',
+    card_transfer_title: '\ud83c\udfe6 \u041f\u0435\u0440\u0435\u0432\u043e\u0434 \u043d\u0430 \u043a\u0430\u0440\u0442\u0443',
+    card_transfer_info: '\u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 <b>5 USD (\u2248200 UAH)</b> \u043d\u0430 \u043a\u0430\u0440\u0442\u0443 \u043d\u0438\u0436\u0435, \u0437\u0430\u0442\u0435\u043c \u043d\u0430\u0436\u043c\u0438\u0442\u0435 "\u041e\u043f\u043b\u0430\u0442\u0438\u043b":\n\n<code>{details}</code>',
+    card_transfer_sent: '\u2705 \u041e\u043f\u043b\u0430\u0442\u0438\u043b',
+    card_transfer_await: '\u23f3 \u041f\u043b\u0430\u0442\u0451\u0436 <b>#{id}</b> \u043e\u0436\u0438\u0434\u0430\u0435\u0442 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f.\n\n\u0410\u0434\u043c\u0438\u043d \u043f\u0440\u043e\u0432\u0435\u0440\u0438\u0442 \u0438 \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442 \u043a\u043b\u044e\u0447 \u0432 \u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0435\u0435 \u0432\u0440\u0435\u043c\u044f.',
+    card_transfer_approve: '\u2705 \u041f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044c',
+    card_transfer_reject: '\u274c \u041e\u0442\u043a\u043b\u043e\u043d\u0438\u0442\u044c',
+    pending_title: '\u23f3 <b>\u041e\u0436\u0438\u0434\u0430\u044e\u0442 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f:</b>',
+    pending_empty: '\u041d\u0435\u0442 \u043e\u0436\u0438\u0434\u0430\u044e\u0449\u0438\u0445 \u043f\u043b\u0430\u0442\u0435\u0436\u0435\u0439.',
     success: '\u2705 <b>\u041e\u043f\u043b\u0430\u0442\u0430 \u043f\u0440\u043e\u0448\u043b\u0430!</b>',
     success_info: '\u041a\u043b\u044e\u0447: <code>{key}</code>\n\n\u041e\u0442\u043a\u0440\u043e\u0439\u0442\u0435 <b>EncodeX</b> \u2192 <b>\u041f\u0440\u043e\u0444\u0438\u043b\u044c</b> \u2192 <b>\u0410\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u044f</b>',
     timeout: '\u274c <b>\u0422\u0430\u0439\u043c\u0430\u0443\u0442</b>\nCryptoBot API \u043d\u0435 \u043e\u0442\u0432\u0435\u0442\u0438\u043b \u0437\u0430 15\u0441',
@@ -173,6 +199,8 @@ const L = {
     err_crypto: '\u274c \u041e\u0448\u0438\u0431\u043a\u0430 CryptoBot:\n<code>{data}</code>',
     stats: '\ud83d\udcca <b>\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430:</b> {n}',
     genkeys: '\ud83d\udd11 <b>\u0421\u0433\u0435\u043d\u0435\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043e 10 \u043a\u043b\u044e\u0447\u0435\u0439:</b>\n<code>{keys}</code>',
+    approved: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d. \u041a\u043b\u044e\u0447 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d.',
+    rejected: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043e\u0442\u043a\u043b\u043e\u043d\u0451\u043d.'
 
     profile_title: '\ud83d\udc64 <b>\u0412\u0430\u0448 \u043f\u0440\u043e\u0444\u0438\u043b\u044c</b>',
     profile_id: '\ud83d\udd11 ID: <code>{id}</code>',
@@ -304,6 +332,7 @@ bot.callbackQuery(/^menu_buy$/, async (ctx) => {
   if (CRYPTOBOT_TOKEN) kb.row();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   if (CRYPTOBOT_TOKEN) kb.text(t.card, 'pay_card_lifetime');
+  kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
   kb.row().text(t.back, 'back_start');
   try {
     await ctx.editMessageText(
@@ -432,6 +461,7 @@ bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
   if (CRYPTOBOT_TOKEN) kb.row();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   if (CRYPTOBOT_TOKEN) kb.text(t.card, 'pay_card_lifetime');
+  kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
     t.plan_title + '\n\n' + t.plan_price + '\n' + t.plan_desc + '\n\n' + t.choose_payment,
@@ -593,7 +623,128 @@ bot.callbackQuery(/^pay_card_lifetime$/, async (ctx) => {
   }
 });
 
-// ── Back to main menu (was back_start) ───────────────
+// ── Card Transfer (Manual) ───────────────────────────
+
+bot.callbackQuery(/^pay_card_transfer_lifetime$/, async (ctx) => {
+  const lang = getLang(ctx);
+  const t = L[lang];
+  const kb = new InlineKeyboard()
+    .text(t.card_transfer_sent, 'card_transfer_done')
+    .row()
+    .text(t.back, 'buy_lifetime');
+  await ctx.editMessageText(
+    t.card_transfer_title + '\n\n' + t.card_transfer_info.replace('{details}', esc(CARD_DETAILS)),
+    { parse_mode: 'HTML', reply_markup: kb }
+  ).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
+// ── Card Transfer: "I paid" button ───────────────────
+
+bot.callbackQuery(/^card_transfer_done$/, async (ctx) => {
+  const lang = getLang(ctx);
+  const t = L[lang];
+  awaitingReceipt.add(ctx.from.id);
+  await ctx.editMessageText(
+    t.card_transfer_title + '\n\n📸 ' + (lang === 'ru' ? 'Отправьте фото квитанции об оплате' : 'Send a photo of the payment receipt'),
+    { parse_mode: 'HTML' }
+  ).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
+// ── Handle receipt photo ─────────────────────────────
+
+bot.on(':photo', async (ctx) => {
+  if (!awaitingReceipt.has(ctx.from.id)) return;
+  awaitingReceipt.delete(ctx.from.id);
+  const lang = getLang(ctx);
+  const t = L[lang];
+  const id = ++pendingIdCounter;
+  const userId = ctx.from.id;
+  const name = ctx.from.first_name || 'User';
+  const msg = await ctx.reply(
+    t.card_transfer_await.replace('{id}', id),
+    { parse_mode: 'HTML' }
+  );
+  pendingPayments.set(id, { id, userId, name, lang, photoMsgId: msg.message_id, chatId: msg.chat.id });
+
+  // Notify admins
+  const fileId = ctx.msg.photo[ctx.msg.photo.length - 1].file_id;
+  for (const adminId of ADMIN_IDS) {
+    try {
+      const kb = new InlineKeyboard()
+        .text(t.card_transfer_approve, 'approve_payment_' + id)
+        .text(t.card_transfer_reject, 'reject_payment_' + id);
+      await bot.api.sendPhoto(adminId, fileId, {
+        caption: '💳 ' + (lang === 'ru' ? 'Новый платёж' : 'New payment') + ' #' + id + '\n👤 ' + name + ' (ID: ' + userId + ')',
+        reply_markup: kb
+      });
+    } catch {}
+  }
+});
+
+// ── Admin approve/reject callbacks ───────────────────
+
+bot.callbackQuery(/^approve_payment_(\d+)$/, async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) { await ctx.answerCallbackQuery(); return; }
+  const id = Number(ctx.match[1]);
+  const p = pendingPayments.get(id);
+  if (!p) { await ctx.answerCallbackQuery('Not found'); return; }
+  pendingPayments.delete(id);
+  const lang = p.lang || 'en';
+  const t = L[lang];
+  const key = genKey();
+  saveKey(key, String(p.userId), p.name, 'card_transfer');
+  try {
+    await bot.api.sendMessage(p.userId,
+      t.success + '\n\n' + t.success_info.replace('{key}', key),
+      { parse_mode: 'HTML' }
+    );
+  } catch {}
+  await ctx.editMessageCaption({
+    caption: (ctx.msg?.caption || '') + '\n\n✅ ' + t.approved.replace('{id}', id)
+  }).catch(() => {});
+  await ctx.answerCallbackQuery(t.approved.replace('{id}', id));
+});
+
+bot.callbackQuery(/^reject_payment_(\d+)$/, async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) { await ctx.answerCallbackQuery(); return; }
+  const id = Number(ctx.match[1]);
+  const p = pendingPayments.get(id);
+  if (!p) { await ctx.answerCallbackQuery('Not found'); return; }
+  pendingPayments.delete(id);
+  const lang = p.lang || 'en';
+  const t = L[lang];
+  try {
+    await bot.api.sendMessage(p.userId,
+      t.rejected.replace('{id}', id) + '\n\n' + (lang === 'ru' ? 'Свяжитесь с @plopaja' : 'Contact @plopaja'),
+      { parse_mode: 'HTML' }
+    );
+  } catch {}
+  await ctx.editMessageCaption({
+    caption: (ctx.msg?.caption || '') + '\n\n❌ ' + t.rejected.replace('{id}', id)
+  }).catch(() => {});
+  await ctx.answerCallbackQuery(t.rejected.replace('{id}', id));
+});
+
+// ── Admin /pending command ───────────────────────────
+
+bot.command('pending', async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const lang = getLang(ctx);
+  const t = L[lang];
+  if (pendingPayments.size === 0) {
+    await ctx.reply(t.pending_title + '\n' + t.pending_empty, { parse_mode: 'HTML' });
+    return;
+  }
+  let txt = t.pending_title + '\n';
+  for (const [id, p] of pendingPayments) {
+    txt += '\n#' + id + ' — 👤 ' + p.name + ' (ID: ' + p.userId + ')';
+  }
+  await ctx.reply(txt, { parse_mode: 'HTML' });
+});
+
+// ── Back to main menu ────────────────────────────────
 
 bot.callbackQuery(/^back_start$/, async (ctx) => {
   const lang = getLang(ctx);
