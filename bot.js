@@ -183,7 +183,7 @@ bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
     const timer = setTimeout(() => controller.abort(), 15000);
     const res = await fetch('https://pay.crypt.bot/api/createInvoice', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Crypto-Pay-API-Key': CRYPTOBOT_TOKEN },
+      headers: { 'Content-Type': 'application/json', 'Crypto-Pay-API-Token': CRYPTOBOT_TOKEN },
       body: JSON.stringify({
         asset: 'USDT', amount: 50,
         description: 'EncodeX Premium \u2014 Lifetime',
@@ -256,7 +256,7 @@ bot.command('testcrypto', async (ctx) => {
   // Test getMe
   try {
     const res = await fetch('https://pay.crypt.bot/api/getMe', {
-      headers: { 'Crypto-Pay-API-Key': CRYPTOBOT_TOKEN }
+      headers: { 'Crypto-Pay-API-Token': CRYPTOBOT_TOKEN }
     });
     const data = await res.json();
     await ctx.reply('pay.crypt.bot/getMe:\n<code>' + esc(JSON.stringify(data, null, 2)) + '</code>', { parse_mode: 'HTML' });
@@ -267,7 +267,7 @@ bot.command('testcrypto', async (ctx) => {
   // Test alternative endpoint
   try {
     const res2 = await fetch('https://api.crypt.bot/v1/getMe', {
-      headers: { 'Crypto-Pay-API-Key': CRYPTOBOT_TOKEN }
+      headers: { 'Crypto-Pay-API-Token': CRYPTOBOT_TOKEN }
     });
     const data2 = await res2.json();
     await ctx.reply('api.crypt.bot/getMe:\n<code>' + esc(JSON.stringify(data2, null, 2)) + '</code>', { parse_mode: 'HTML' });
