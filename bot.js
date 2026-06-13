@@ -16,12 +16,38 @@ function genKey() {
   return 'ENCODEX-' + r() + '-' + r() + '-' + r() + '-' + r();
 }
 
-const store = { keys: {}, total: 0 };
+const store = { keys: {}, total: 0, sold: 0 };
+
 function saveKey(key, userId, name, method) {
+  if (store.keys[key]) return false;
   store.keys[key] = { key, userId, name, method, time: Date.now() };
   store.total++;
+  if (userId) store.sold++;
+  return true;
 }
-function getStats() { return '\uD83D\uDCCA Keys: ' + store.total; }
+
+function issueKey(userId, name, method) {
+  for (const k in store.keys) {
+    if (!store.keys[k].userId) {
+      const entry = store.keys[k];
+      entry.userId = userId;
+      entry.name = name;
+      entry.method = method;
+      store.sold++;
+      return entry.key;
+    }
+  }
+  const key = genKey();
+  store.keys[key] = { key, userId, name, method, time: Date.now() };
+  store.total++;
+  store.sold++;
+  return key;
+}
+
+function getStats() {
+  const available = Object.values(store.keys).filter(k => !k.userId).length;
+  return '\uD83D\uDCCA Keys: ' + store.total + ' total, ' + store.sold + ' sold, ' + available + ' available';
+}
 
 // ── Pending payments (manual card transfer) ──────────
 const pendingPayments = new Map();
@@ -86,7 +112,7 @@ const L = {
     pay_card: '\ud83d\udcb3 Pay 5 USD',
     card_transfer: '\ud83c\udfe6 Card Transfer (Manual)',
     card_transfer_title: '\ud83c\udfe6 Card Transfer',
-    card_transfer_info: 'Send <b>5 USD</b> to the card below, then tap "I paid":\n\n<code>{details}</code>',
+    card_transfer_info: 'Send <b>150 UAH</b> to the card below, then tap "I paid":\n\n<code>{details}</code>',
     card_transfer_sent: '\u2705 I paid',
     card_transfer_await: '\u23f3 Payment <b>#{id}</b> is pending.\n\nAdmin will verify and send your key shortly.',
     card_transfer_approve: '\u2705 Approve',
@@ -102,6 +128,9 @@ const L = {
     err_crypto: '\u274c CryptoBot error:\n<code>{data}</code>',
     stats: '\ud83d\udcca <b>Stats:</b> {n}',
     genkeys: '\ud83d\udd11 <b>Generated 10 keys:</b>\n<code>{keys}</code>',
+    admin_panel: '\ud83d\udcca <b>Admin Panel</b>\n\n{n}\n\n/import <code>key1 key2 ...</code> \u2014 add keys\n/panel \u2014 this panel',
+    import_ok: '\u2705 Imported <b>{n}</b> keys. {dup} duplicates skipped.',
+    import_usage: 'Usage:\n/import <code>KEY1 KEY2 KEY3</code>',
     approved: 'Approved payment #{id}. Key sent to user.',
     rejected: 'Rejected payment #{id}.',
 
@@ -183,7 +212,7 @@ const L = {
     pay_card: '\ud83d\udcb3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c 5 USD',
     card_transfer: '\ud83c\udfe6 \u041f\u0435\u0440\u0435\u0432\u043e\u0434 \u043d\u0430 \u043a\u0430\u0440\u0442\u0443',
     card_transfer_title: '\ud83c\udfe6 \u041f\u0435\u0440\u0435\u0432\u043e\u0434 \u043d\u0430 \u043a\u0430\u0440\u0442\u0443',
-    card_transfer_info: '\u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 <b>5 USD (\u2248200 UAH)</b> \u043d\u0430 \u043a\u0430\u0440\u0442\u0443 \u043d\u0438\u0436\u0435, \u0437\u0430\u0442\u0435\u043c \u043d\u0430\u0436\u043c\u0438\u0442\u0435 "\u041e\u043f\u043b\u0430\u0442\u0438\u043b":\n\n<code>{details}</code>',
+    card_transfer_info: '\u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 <b>150 UAH</b> \u043d\u0430 \u043a\u0430\u0440\u0442\u0443 \u043d\u0438\u0436\u0435, \u0437\u0430\u0442\u0435\u043c \u043d\u0430\u0436\u043c\u0438\u0442\u0435 "\u041e\u043f\u043b\u0430\u0442\u0438\u043b":\n\n<code>{details}</code>',
     card_transfer_sent: '\u2705 \u041e\u043f\u043b\u0430\u0442\u0438\u043b',
     card_transfer_await: '\u23f3 \u041f\u043b\u0430\u0442\u0451\u0436 <b>#{id}</b> \u043e\u0436\u0438\u0434\u0430\u0435\u0442 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f.\n\n\u0410\u0434\u043c\u0438\u043d \u043f\u0440\u043e\u0432\u0435\u0440\u0438\u0442 \u0438 \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442 \u043a\u043b\u044e\u0447 \u0432 \u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0435\u0435 \u0432\u0440\u0435\u043c\u044f.',
     card_transfer_approve: '\u2705 \u041f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044c',
@@ -199,6 +228,9 @@ const L = {
     err_crypto: '\u274c \u041e\u0448\u0438\u0431\u043a\u0430 CryptoBot:\n<code>{data}</code>',
     stats: '\ud83d\udcca <b>\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430:</b> {n}',
     genkeys: '\ud83d\udd11 <b>\u0421\u0433\u0435\u043d\u0435\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043e 10 \u043a\u043b\u044e\u0447\u0435\u0439:</b>\n<code>{keys}</code>',
+    admin_panel: '\ud83d\udcca <b>\u0410\u0434\u043c\u0438\u043d \u043f\u0430\u043d\u0435\u043b\u044c</b>\n\n{n}\n\n/import <code>\u043a\u043b\u044e\u04471 \u043a\u043b\u044e\u04472 ...</code> \u2014 \u0434\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043a\u043b\u044e\u0447\u0438\n/panel \u2014 \u044d\u0442\u0430 \u043f\u0430\u043d\u0435\u043b\u044c',
+    import_ok: '\u2705 \u0418\u043c\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043e <b>{n}</b> \u043a\u043b\u044e\u0447\u0435\u0439. {dup} \u0434\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u043e\u0432 \u043f\u0440\u043e\u043f\u0443\u0449\u0435\u043d\u043e.',
+    import_usage: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435:\n/import <code>\u041a041\u041e042e04271042a1 \u041a041\u041e042e04271042a2</code>',
     approved: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d. \u041a\u043b\u044e\u0447 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d.',
     rejected: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043e\u0442\u043a\u043b\u043e\u043d\u0451\u043d.',
 
@@ -502,8 +534,7 @@ bot.on('pre_checkout_query', async (ctx) => ctx.answerPreCheckoutQuery(true));
 bot.on('message:successful_payment', async (ctx) => {
   const lang = getLang(ctx);
   const t = L[lang];
-  const key = genKey();
-  saveKey(key, String(ctx.from.id), ctx.from.username || ctx.from.first_name || 'user', 'stars');
+  const key = issueKey(String(ctx.from.id), ctx.from.username || ctx.from.first_name || 'user', 'stars');
   await ctx.reply(
     t.success + '\n\n' + t.success_info.replace('{key}', key),
     { parse_mode: 'HTML' }
@@ -693,8 +724,7 @@ bot.callbackQuery(/^approve_payment_(\d+)$/, async (ctx) => {
   pendingPayments.delete(id);
   const lang = p.lang || 'en';
   const t = L[lang];
-  const key = genKey();
-  saveKey(key, String(p.userId), p.name, 'card_transfer');
+  const key = issueKey(String(p.userId), p.name, 'card_transfer');
   try {
     await bot.api.sendMessage(p.userId,
       t.success + '\n\n' + t.success_info.replace('{key}', key),
@@ -801,6 +831,49 @@ bot.command('testcrypto', async (ctx) => {
   }
 });
 
+// ── Admin Panel ──────────────────────────────────────
+
+bot.command('panel', async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const lang = getLang(ctx);
+  const t = L[lang];
+  const available = Object.values(store.keys).filter(k => !k.userId).length;
+  const recent = Object.values(store.keys).sort((a, b) => b.time - a.time).slice(0, 5);
+  let recentText = recent.map(e =>
+    (e.userId ? '\u2705' : '\u26aa') + ' <code>' + e.key.slice(0, 16) + '...</code> ' + (e.userId ? '\u2192 ' + esc(e.name || e.userId) : '\ud83d\udfe2 free')
+  ).join('\n');
+  await ctx.reply(
+    t.admin_panel.replace('{n}',
+      '\uD83D\uDCCA <b>Keys:</b> ' + store.total + ' total, ' + store.sold + ' sold, ' + available + ' available\n' +
+      '\u23f3 <b>Pending:</b> ' + pendingPayments.size + '\n\n' +
+      '<b>\uD83D\uDD0D Recent (last 5):</b>\n' + recentText
+    ),
+    { parse_mode: 'HTML' }
+  );
+});
+
+bot.command('import', async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const lang = getLang(ctx);
+  const t = L[lang];
+  const text = ctx.message?.text || '';
+  const parts = text.split(/[\s,;\n]+/).slice(1).filter(Boolean);
+  if (!parts.length) {
+    await ctx.reply(t.import_usage, { parse_mode: 'HTML' });
+    return;
+  }
+  let imported = 0, dups = 0;
+  for (const raw of parts) {
+    const key = raw.trim().toUpperCase();
+    if (key.length < 5) continue;
+    if (saveKey(key)) imported++; else dups++;
+  }
+  await ctx.reply(
+    t.import_ok.replace('{n}', imported).replace('{dup}', dups),
+    { parse_mode: 'HTML' }
+  );
+});
+
 // ── Express (UNCHANGED) ──────────────────────────────
 
 const app = express();
@@ -811,8 +884,7 @@ app.post('/cryptobot-webhook', async (req, res) => {
     if (req.body?.update_type === 'invoice_paid') {
       const payload = req.body.payload || '';
       const userId = String(payload.split('_').pop() || '');
-      const key = genKey();
-      saveKey(key, userId, 'crypto', 'cryptobot');
+      const key = issueKey(userId, 'crypto', 'cryptobot');
       const lang = userLang.get(Number(userId)) || 'en';
       const t = L[lang];
       try {
