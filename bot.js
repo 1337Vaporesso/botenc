@@ -249,6 +249,33 @@ bot.command('genkeys', async (ctx) => {
   );
 });
 
+bot.command('testcrypto', async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  if (!CRYPTOBOT_TOKEN) { await ctx.reply('CRYPTOBOT_TOKEN not set'); return; }
+
+  // Test getMe
+  try {
+    const res = await fetch('https://pay.crypt.bot/api/getMe', {
+      headers: { 'Crypto-Pay-API-Key': CRYPTOBOT_TOKEN }
+    });
+    const data = await res.json();
+    await ctx.reply('pay.crypt.bot/getMe:\n<code>' + esc(JSON.stringify(data, null, 2)) + '</code>', { parse_mode: 'HTML' });
+  } catch (e) {
+    await ctx.reply('pay.crypt.bot/getMe error:\n<code>' + esc(e.message) + '</code>', { parse_mode: 'HTML' });
+  }
+
+  // Test alternative endpoint
+  try {
+    const res2 = await fetch('https://api.crypt.bot/v1/getMe', {
+      headers: { 'Crypto-Pay-API-Key': CRYPTOBOT_TOKEN }
+    });
+    const data2 = await res2.json();
+    await ctx.reply('api.crypt.bot/getMe:\n<code>' + esc(JSON.stringify(data2, null, 2)) + '</code>', { parse_mode: 'HTML' });
+  } catch (e) {
+    await ctx.reply('api.crypt.bot/getMe error:\n<code>' + esc(e.message) + '</code>', { parse_mode: 'HTML' });
+  }
+});
+
 // ── Express ──────────────────────────────────────────
 
 const app = express();
