@@ -1,5 +1,5 @@
 const express = require('express');
-const { Bot, InlineKeyboard } = require('grammy');
+const { Bot, InlineKeyboard, webhookCallback } = require('grammy');
 const { randomUUID } = require('crypto');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -8,6 +8,8 @@ const CRYPTOBOT_TOKEN = process.env.CRYPTOBOT_TOKEN;
 const ADMIN_IDS = (process.env.ADMIN_IDS || '').split(',').map(Number);
 const PORT = process.env.PORT || 8080;
 const BOT_USERNAME = process.env.BOT_USERNAME || '';
+// Railway даёт домен автоматом, но можно указать вручную
+const WEBHOOK_DOMAIN = process.env.WEBHOOK_DOMAIN || '';
 
 function genKey() {
   const r = () => randomUUID().slice(0, 4).toUpperCase();
@@ -29,7 +31,6 @@ const PLANS = {
 
 const bot = new Bot(BOT_TOKEN);
 
-// Helper: ignore "message is not modified" error
 function ignore(e) {
   if (e?.error_code === 400 && e?.description?.includes('message is not modified')) return;
   throw e;
@@ -82,27 +83,26 @@ bot.on('message:successful_payment', async (ctx) => {
 
 bot.callbackQuery(/pay_crypto_(.+)/, async (ctx) => {
   if (!CRYPTOBOT_TOKEN) {
-    await ctx.editMessageText('❌ CRYPTOBOT_TOKEN not set in Railway Variables');
+    await ctx.editMessageText('❌ CRYPTOBOT_TOKEN not set');
     return;
   }
   const plan = PLANS[ctx.match[1]];
   if (!plan) return;
   try {
-    const body = JSON.stringify({
-      asset: 'USDT', amount: plan.usdt,
-      description: 'EncodeX Premium — ' + plan.label,
-      paid_btn_name: 'openBot',
-      paid_btn_url: 'https://t.me/' + BOT_USERNAME,
-      payload: 'crypto_' + plan.label + '_' + ctx.from.id
-    });
     const res = await fetch('https://pay.crypt.bot/api/createInvoice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Crypto-Pay-API-Key': CRYPTOBOT_TOKEN },
-      body: body
+      body: JSON.stringify({
+        asset: 'USDT', amount: plan.usdt,
+        description: 'EncodeX Premium — ' + plan.label,
+        paid_btn_name: 'openBot',
+        paid_btn_url: 'https://t.me/' + BOT_USERNAME,
+        payload: 'crypto_' + plan.label + '_' + ctx.from.id
+      })
     });
     const data = await res.json();
     if (!data.ok) {
-      await ctx.reply('❌ CryptoBot error:\n' + JSON.stringify(data, null, 2));
+      await ctx.reply('❌ CryptoBot error:\n' + JSON.stringify(data));
       return;
     }
     await ctx.editMessageText('💎 ' + plan.usdt + ' USDT\n\nPay:', { reply_markup: new InlineKeyboard().url('💳 Pay', data.result.bot_invoice_url) });
@@ -133,10 +133,11 @@ bot.command('genkeys', async (ctx) => {
   await ctx.reply('Generated 10 keys:\n```\n' + keys.join('\n') + '\n```', { parse_mode: 'Markdown' });
 });
 
-// Express for CryptoBot webhook
+// Express
 const app = express();
 app.use(express.json());
 
+// CryptoBot webhook
 app.post('/cryptobot-webhook', async (req, res) => {
   try {
     if (req.body?.update_type === 'invoice_paid') {
@@ -149,11 +150,32 @@ app.post('/cryptobot-webhook', async (req, res) => {
   res.sendStatus(200);
 });
 
+// Telegram webhook endpoint
+app.post('/webhook', webhookCallback(bot, 'express'));
+
 app.get('/', (req, res) => res.send('EncodeX Bot'));
 
+// Запуск: устанавливаем webhook и стартуем
 async function start() {
-  await bot.api.deleteWebhook({ drop_pending_updates: true });
-  bot.start();
+  const domain = WEBHOOK_DOMAIN || (process.env.RAILWAY_PUBLIC_DOMAIN ? 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN : null);
+  if (domain) {
+    await bot.api.setWebhook(domain + '/webhook', { drop_pending_updates: true });
+    console.log('Webhook set to ' + domain + '/webhook');
+  } else {
+    // Fallback: polling
+    await bot.api.deleteWebhook({ drop_pending_updates: true });
+    bot.start();
+    console.log('Bot started in polling mode');
+  }
 }
-start();
-app.listen(PORT, () => console.log('Bot on port ' + PORT));
+
+start().then(() => {
+  app.listen(PORT, () => console.log('Bot on port ' + PORT));
+}).catch(e => {
+  console.error('Start error:', e.message);
+  // Last resort: polling
+  bot.api.deleteWebhook({ drop_pending_updates: true }).then(() => {
+    bot.start();
+    app.listen(PORT, () => console.log('Bot on port ' + PORT));
+  });
+});
