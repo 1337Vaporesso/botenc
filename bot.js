@@ -46,7 +46,7 @@ bot.command('start', async (ctx) => {
 
 bot.callbackQuery(/buy_(.+)/, async (ctx) => {
   const plan = PLANS[ctx.match[0]];
-  if (!plan) return;
+  if (!plan) { await ctx.answerCallbackQuery(); return; }
   const kb = new InlineKeyboard();
   if (PROVIDER_TOKEN) kb.text('⭐ Telegram Stars', 'pay_stars_' + ctx.match[0]);
   if (PROVIDER_TOKEN && CRYPTOBOT_TOKEN) kb.row();
@@ -56,9 +56,9 @@ bot.callbackQuery(/buy_(.+)/, async (ctx) => {
 });
 
 bot.callbackQuery(/pay_stars_(.+)/, async (ctx) => {
-  if (!PROVIDER_TOKEN) return;
+  if (!PROVIDER_TOKEN) { await ctx.answerCallbackQuery(); return; }
   const plan = PLANS[ctx.match[1]];
-  if (!plan) return;
+  if (!plan) { await ctx.answerCallbackQuery(); return; }
   try {
     const invoice = await bot.api.createInvoiceLink(
       'EncodeX Premium — ' + plan.label,
@@ -83,11 +83,10 @@ bot.on('message:successful_payment', async (ctx) => {
 
 bot.callbackQuery(/pay_crypto_(.+)/, async (ctx) => {
   if (!CRYPTOBOT_TOKEN) {
-    await ctx.editMessageText('❌ CRYPTOBOT_TOKEN not set');
-    return;
+    await ctx.editMessageText('❌ CRYPTOBOT_TOKEN not set'); await ctx.answerCallbackQuery(); return;
   }
   const plan = PLANS[ctx.match[1]];
-  if (!plan) return;
+  if (!plan) { await ctx.answerCallbackQuery(); return; }
   try {
     const res = await fetch('https://pay.crypt.bot/api/createInvoice', {
       method: 'POST',
@@ -102,12 +101,11 @@ bot.callbackQuery(/pay_crypto_(.+)/, async (ctx) => {
     });
     const data = await res.json();
     if (!data.ok) {
-      await ctx.reply('❌ CryptoBot error:\n' + JSON.stringify(data));
-      return;
+      await ctx.answerCallbackQuery(); await ctx.reply('❌ CryptoBot error:\n' + JSON.stringify(data)); return;
     }
     await ctx.editMessageText('💎 ' + plan.usdt + ' USDT\n\nPay:', { reply_markup: new InlineKeyboard().url('💳 Pay', data.result.bot_invoice_url) });
   } catch (e) {
-    await ctx.reply('❌ Exception:\n' + (e.message || e));
+    await ctx.answerCallbackQuery(); await ctx.reply('❌ Exception:\n' + (e.message || e)); return;
   }
   await ctx.answerCallbackQuery();
 });
