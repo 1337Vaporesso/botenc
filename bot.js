@@ -152,8 +152,9 @@ app.get('/', (req, res) => res.send('EncodeX Bot'));
 // Webhook mode
 if (WEBHOOK_DOMAIN) {
   app.post('/webhook', webhookCallback(bot, 'express'));
-  bot.api.setWebhook(WEBHOOK_DOMAIN + '/webhook', { drop_pending_updates: true }).then(() => {
-    console.log('Webhook set to ' + WEBHOOK_DOMAIN + '/webhook');
+  const url = (WEBHOOK_DOMAIN.startsWith('http') ? '' : 'https://') + WEBHOOK_DOMAIN + '/webhook';
+  bot.api.setWebhook(url, { drop_pending_updates: true }).then(() => {
+    console.log('Webhook set to ' + url);
     app.listen(PORT, () => console.log('Bot on port ' + PORT));
   }).catch(e => {
     console.error('Webhook failed:', e.message);
