@@ -151,5 +151,9 @@ app.post('/cryptobot-webhook', async (req, res) => {
 
 app.get('/', (req, res) => res.send('EncodeX Bot'));
 
-bot.start();
+async function start() {
+  await bot.api.deleteWebhook({ drop_pending_updates: true });
+  bot.start();
+}
+start();
 app.listen(PORT, () => console.log('Bot on port ' + PORT));
