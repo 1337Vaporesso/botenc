@@ -1,5 +1,5 @@
 const express = require('express');
-const { Bot, InlineKeyboard, webhookCallback } = require('grammy');
+const { Bot, InlineKeyboard } = require('grammy');
 const { randomUUID } = require('crypto');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -8,8 +8,6 @@ const CRYPTOBOT_TOKEN = process.env.CRYPTOBOT_TOKEN;
 const ADMIN_IDS = (process.env.ADMIN_IDS || '').split(',').map(Number);
 const PORT = process.env.PORT || 8080;
 const BOT_USERNAME = process.env.BOT_USERNAME || '';
-// Railway даёт домен автоматом, но можно указать вручную
-const WEBHOOK_DOMAIN = process.env.WEBHOOK_DOMAIN || '';
 
 function genKey() {
   const r = () => randomUUID().slice(0, 4).toUpperCase();
@@ -149,24 +147,17 @@ app.post('/cryptobot-webhook', async (req, res) => {
 });
 
 app.get('/', (req, res) => res.send('EncodeX Bot'));
+app.get('/health', (req, res) => res.send('ok'));
 
-// Webhook mode
-if (WEBHOOK_DOMAIN) {
-  app.post('/webhook', webhookCallback(bot, 'express'));
-  bot.api.setWebhook(WEBHOOK_DOMAIN + '/webhook', { drop_pending_updates: true }).then(() => {
-    console.log('Webhook set to ' + WEBHOOK_DOMAIN + '/webhook');
-    app.listen(PORT, () => console.log('Bot on port ' + PORT));
-  }).catch(e => {
-    console.error('Webhook setup failed:', e.message);
-    process.exit(1);
+bot.api.deleteWebhook({ drop_pending_updates: true }).then(() => {
+  app.listen(PORT, () => {
+    console.log('Bot on port ' + PORT);
+    setTimeout(() => bot.start().catch(e => console.error(e.message)), 5000);
   });
-} else {
-  // Polling mode
-  bot.api.deleteWebhook({ drop_pending_updates: true }).then(() => {
-    bot.start();
-    app.listen(PORT, () => console.log('Bot on port ' + PORT));
-  }).catch(e => {
-    console.error('Polling setup failed:', e.message);
-    process.exit(1);
+}).catch(e => {
+  console.error('deleteWebhook failed:', e.message);
+  app.listen(PORT, () => {
+    console.log('Bot on port ' + PORT);
+    setTimeout(() => bot.start().catch(e => console.error(e.message)), 5000);
   });
-}
+});
