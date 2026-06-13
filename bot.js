@@ -74,6 +74,10 @@ const L = {
     crypto_pay_title: '\ud83d\udc8e CryptoBot (USDT)',
     crypto_pay_info: '<i>Tap the button to pay with CryptoBot</i>',
     pay_usdt: '\ud83d\udcb3 Pay 5 USDT',
+    card: '\ud83d\udcb3 Bank Card (USD)',
+    card_pay_title: '\ud83d\udcb3 Bank Card',
+    card_pay_info: '<i>Pay with Visa/Mastercard via CryptoBot</i>',
+    pay_card: '\ud83d\udcb3 Pay 5 USD',
     success: '\u2705 <b>Payment Successful!</b>',
     success_info: 'Your key: <code>{key}</code>\n\nOpen <b>EncodeX</b> \u2192 <b>Profile</b> \u2192 <b>Activate</b>',
     timeout: '\u274c <b>Timeout</b>\nCryptoBot API did not respond in 15s',
@@ -112,7 +116,7 @@ const L = {
     faq_q3: '\u25b6\ufe0f Is it unlimited?',
     faq_a3: 'Yes! Lifetime license = unlimited videos, no restrictions.',
     faq_q4: '\u25b6\ufe0f What payment methods?',
-    faq_a4: 'CryptoBot (USDT) and Telegram Stars.',
+    faq_a4: 'CryptoBot (USDT), Bank Card (USD), and Telegram Stars.',
 
     // Support
     support_title: '\ud83d\udd27 <b>Support</b>',
@@ -143,19 +147,23 @@ const L = {
     lifetime: '\ud83d\udc51 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430 \u2014 50 USDT',
     lifetime_stars: '\ud83d\udc51 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430 \u2014 5 USDT / 50 \u2b50',
     plan_title: '\ud83d\udc51 <b>\u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430</b>',
-    plan_price: '\ud83d\udcb0 <b>5 USDT</b>' + (PROVIDER_TOKEN ? ' / <b>150 \u2b50</b>' : ''),
+    plan_price: '\ud83d\udcb0 <b>5 USDT</b>' + (PROVIDER_TOKEN ? ' / <b>50 \u2b50</b>' : ''),
     plan_desc: '<i>\u041e\u0434\u0438\u043d \u043f\u043b\u0430\u0442\u0435\u0436 \u2022 \u0411\u0435\u0437 \u043b\u0438\u043c\u0438\u0442\u043e\u0432 \u2022 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430</i>',
     choose_payment: '<i>\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u043f\u043b\u0430\u0442\u0443:</i>',
     stars: '\u2b50 Telegram Stars',
     crypto: '\ud83d\udc8e CryptoBot (USDT)',
     back: '\u2190 \u041d\u0430\u0437\u0430\u0434',
     creating: '\u23f3 <b>\u0421\u043e\u0437\u0434\u0430\u0451\u043c \u0438\u043d\u0432\u043e\u0439\u0441...</b>',
-    pay_stars: '\ud83d\udcb3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c 150 \u2b50',
+    pay_stars: '\ud83d\udcb3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c 50 \u2b50',
     stars_pay_title: '\u2b50 Telegram Stars',
     stars_pay_info: '<i>\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043a\u043d\u043e\u043f\u043a\u0443 \u0434\u043b\u044f \u043e\u043f\u043b\u0430\u0442\u044b</i>',
     crypto_pay_title: '\ud83d\udc8e CryptoBot (USDT)',
     crypto_pay_info: '<i>\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043a\u043d\u043e\u043f\u043a\u0443 \u0434\u043b\u044f \u043e\u043f\u043b\u0430\u0442\u044b</i>',
-    pay_usdt: '\ud83d\udcb3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c 50 USDT',
+    pay_usdt: '\ud83d\udcb3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c 5 USDT',
+    card: '\ud83d\udcb3 \u0411\u0430\u043d\u043a\u043e\u0432\u0441\u043a\u0430\u044f \u043a\u0430\u0440\u0442\u0430 (USD)',
+    card_pay_title: '\ud83d\udcb3 \u0411\u0430\u043d\u043a\u043e\u0432\u0441\u043a\u0430\u044f \u043a\u0430\u0440\u0442\u0430',
+    card_pay_info: '<i>\u041e\u043f\u043b\u0430\u0442\u0430 Visa/Mastercard \u0447\u0435\u0440\u0435\u0437 CryptoBot</i>',
+    pay_card: '\ud83d\udcb3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c 5 USD',
     success: '\u2705 <b>\u041e\u043f\u043b\u0430\u0442\u0430 \u043f\u0440\u043e\u0448\u043b\u0430!</b>',
     success_info: '\u041a\u043b\u044e\u0447: <code>{key}</code>\n\n\u041e\u0442\u043a\u0440\u043e\u0439\u0442\u0435 <b>EncodeX</b> \u2192 <b>\u041f\u0440\u043e\u0444\u0438\u043b\u044c</b> \u2192 <b>\u0410\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u044f</b>',
     timeout: '\u274c <b>\u0422\u0430\u0439\u043c\u0430\u0443\u0442</b>\nCryptoBot API \u043d\u0435 \u043e\u0442\u0432\u0435\u0442\u0438\u043b \u0437\u0430 15\u0441',
@@ -190,7 +198,7 @@ const L = {
     faq_q3: '\u25b6\ufe0f \u042d\u0442\u043e \u0431\u0435\u0437\u043b\u0438\u043c\u0438\u0442\u043d\u043e?',
     faq_a3: '\u0414\u0430! \u041b\u0438\u0446\u0435\u043d\u0437\u0438\u044f \u043d\u0430\u0432\u0441\u0435\u0433\u0434\u0430 = \u0431\u0435\u0437\u043b\u0438\u043c\u0438\u0442\u043d\u043e\u0435 \u0432\u0438\u0434\u0435\u043e, \u0431\u0435\u0437 \u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0438\u0439.',
     faq_q4: '\u25b6\ufe0f \u041a\u0430\u043a\u0438\u0435 \u0441\u043f\u043e\u0441\u043e\u0431\u044b \u043e\u043f\u043b\u0430\u0442\u044b?',
-    faq_a4: 'CryptoBot (USDT) \u0438 Telegram Stars.',
+    faq_a4: 'CryptoBot (USDT), \u0431\u0430\u043d\u043a\u043e\u0432\u0441\u043a\u0430\u044f \u043a\u0430\u0440\u0442\u0430 (USD) \u0438 Telegram Stars.',
 
     support_title: '\ud83d\udd27 <b>\u041f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0430</b>',
     support_text: '\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u044b? \u0421\u0432\u044f\u0436\u0438\u0442\u0435\u0441\u044c \u0441 \u043d\u0430\u043c\u0438:\n\n\ud83d\udcac @plopaja\n\u2709\ufe0f <a href="https://t.me/plopaja">\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0447\u0430\u0442</a>\n\n\u041e\u0442\u0432\u0435\u0447\u0430\u0435\u043c \u0432 \u0442\u0435\u0447\u0435\u043d\u0438\u0438 24 \u0447\u0430\u0441\u043e\u0432.',
@@ -289,13 +297,13 @@ bot.callbackQuery(/^menu_main$/, async (ctx) => {
 
 bot.callbackQuery(/^menu_buy$/, async (ctx) => {
   await ctx.answerCallbackQuery();
-  // Reuse existing buy_lifetime logic
   const lang = getLang(ctx);
   const t = L[lang];
   const kb = new InlineKeyboard();
   if (PROVIDER_TOKEN) kb.text(t.stars, 'pay_stars_lifetime');
   if (PROVIDER_TOKEN && CRYPTOBOT_TOKEN) kb.row();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
+  if (CRYPTOBOT_TOKEN) kb.text(t.card, 'pay_card_lifetime');
   kb.row().text(t.back, 'back_start');
   try {
     await ctx.editMessageText(
@@ -423,6 +431,7 @@ bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
   if (PROVIDER_TOKEN) kb.text(t.stars, 'pay_stars_lifetime');
   if (PROVIDER_TOKEN && CRYPTOBOT_TOKEN) kb.row();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
+  if (CRYPTOBOT_TOKEN) kb.text(t.card, 'pay_card_lifetime');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
     t.plan_title + '\n\n' + t.plan_price + '\n' + t.plan_desc + '\n\n' + t.choose_payment,
@@ -519,6 +528,63 @@ bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
       .text(t.back, 'buy_lifetime');
     await ctx.api.editMessageText(chatId, msgId,
       '<b>' + t.crypto_pay_title + '</b>\n\n5 USDT\n\n' + t.crypto_pay_info,
+      { parse_mode: 'HTML', reply_markup: kb }
+    );
+  } catch (e) {
+    const text = e.name === 'AbortError'
+      ? t.timeout
+      : t.err_exc.replace('{msg}', esc(e.message || String(e)));
+    await ctx.api.editMessageText(chatId, msgId, text, { parse_mode: 'HTML' }).catch(() => {});
+  }
+});
+
+// ── Card Payment (fiat via CryptoBot) ────────────────
+
+bot.callbackQuery(/^pay_card_lifetime$/, async (ctx) => {
+  const lang = getLang(ctx);
+  const t = L[lang];
+
+  if (!CRYPTOBOT_TOKEN) {
+    await ctx.editMessageText(t.err_no_token).catch(() => {});
+    await ctx.answerCallbackQuery();
+    return;
+  }
+  await ctx.answerCallbackQuery();
+
+  const msg = await ctx.reply(t.creating, { parse_mode: 'HTML' });
+  const chatId = msg.chat.id;
+  const msgId = msg.message_id;
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch('https://pay.crypt.bot/api/createInvoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Crypto-Pay-API-Token': CRYPTOBOT_TOKEN },
+      body: JSON.stringify({
+        currency_type: 'fiat', fiat: 'USD', amount: '5',
+        accepted_assets: 'USDT,TON,TRX',
+        description: 'EncodeX Premium \u2014 Lifetime',
+        paid_btn_name: 'openBot',
+        paid_btn_url: 'https://t.me/' + (BOT_USERNAME || 'encodex_bot'),
+        payload: 'card_lifetime_' + ctx.from.id
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    const data = await res.json();
+    if (!data.ok) {
+      await ctx.api.editMessageText(chatId, msgId,
+        t.err_crypto.replace('{data}', esc(JSON.stringify(data))),
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
+      return;
+    }
+    const kb = new InlineKeyboard()
+      .url(t.pay_card, data.result.bot_invoice_url).row()
+      .text(t.back, 'buy_lifetime');
+    await ctx.api.editMessageText(chatId, msgId,
+      '<b>' + t.card_pay_title + '</b>\n\n5 USD\n\n' + t.card_pay_info,
       { parse_mode: 'HTML', reply_markup: kb }
     );
   } catch (e) {
