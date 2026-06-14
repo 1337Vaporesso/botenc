@@ -48,6 +48,22 @@ function getStats() {
   return '\uD83D\uDCCA Keys: ' + store.total + ' total, ' + store.sold + ' sold, ' + available + ' available';
 }
 
+// ── Promo codes ─────────────────────────────────────
+const promoCodes = new Map();
+const purchaseHistory = [];
+const userPromo = new Map();
+const promoEntry = new Set();
+
+function addHistory(entry) { purchaseHistory.push({ time: Date.now(), ...entry }); }
+
+function applyPromo(userId, base) {
+  const code = userPromo.get(userId);
+  if (!code || !promoCodes.has(code)) return base;
+  const promo = promoCodes.get(code);
+  if (promo.uses >= promo.maxUses) { userPromo.delete(userId); return base; }
+  return (base * (100 - promo.discount) / 100).toFixed(2);
+}
+
 // ── Pending payments (manual card transfer) ──────────
 const pendingPayments = new Map();
 let pendingIdCounter = 0;
@@ -121,6 +137,24 @@ const L = {
     admin_panel: '\ud83d\udcca <b>Admin Panel</b>\n\n{n}\n\n/import <code>key1 key2 ...</code> \u2014 add keys\n/panel \u2014 this panel',
     import_ok: '\u2705 Imported <b>{n}</b> keys. {dup} duplicates skipped.',
     import_usage: 'Usage:\n/import <code>KEY1 KEY2 KEY3</code>',
+    promo_btn: '\ud83c\udfab Promo Code',
+    promo_ask: 'Send me your promo code:',
+    promo_invalid: '\u274c Invalid or expired promo code.',
+    promo_valid: '\u2705 Promo code <b>{code}</b> applied! Discount: <b>{d}%</b>',
+    promo_used: '\u26a0\ufe0f This promo has reached its usage limit.',
+    promo_active: '\u2705 Active promo: <b>{code}</b> ({d}% off)',
+    promo_title: '\ud83c\udfab <b>Promo Codes</b>',
+    promo_empty: 'No promo codes created.',
+    promo_list: '\ud83c\udfab <b>Promo Codes:</b>\n{list}',
+    promo_line: '<code>{code}</code> \u2014 {d}% off, {uses}/{max} uses',
+    promo_created: '\u2705 Promo <b>{code}</b> created: {d}% off, {max} max uses.',
+    promo_deleted: '\u274c Promo <b>{code}</b> deleted.',
+    promo_delete_fail: '\u274c Promo <b>{code}</b> not found.',
+    createpromo_usage: 'Usage:\n/createpromo <code>NAME DISCOUNT% MAXUSES</code>',
+    history_title: '\uD83D\uDCC4 <b>Purchase History</b>\n{list}',
+    history_empty: 'No purchases yet.',
+    history_line: '<code>{key}</code> \u2192 {name} ({method}){promo}\n',
+    admin_panel_enhanced: '\ud83d\udcca <b>Admin Panel</b>\n\n{n}\n\u23f3 Pending: {pending}\n\ud83c\udfab Active promos: {promos}\n\n\ud83d\udc41 /panel \u2014 refresh\n/import \u2014 keys\n/createpromo \u2014 promo\n/promos \u2014 list\n/history \u2014 purchases',
     approved: 'Approved payment #{id}. Key sent to user.',
     rejected: 'Rejected payment #{id}.',
 
@@ -212,6 +246,24 @@ const L = {
     admin_panel: '\ud83d\udcca <b>\u0410\u0434\u043c\u0438\u043d \u043f\u0430\u043d\u0435\u043b\u044c</b>\n\n{n}\n\n/import <code>\u043a\u043b\u044e\u04471 \u043a\u043b\u044e\u04472 ...</code> \u2014 \u0434\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043a\u043b\u044e\u0447\u0438\n/panel \u2014 \u044d\u0442\u0430 \u043f\u0430\u043d\u0435\u043b\u044c',
     import_ok: '\u2705 \u0418\u043c\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043e <b>{n}</b> \u043a\u043b\u044e\u0447\u0435\u0439. {dup} \u0434\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u043e\u0432 \u043f\u0440\u043e\u043f\u0443\u0449\u0435\u043d\u043e.',
     import_usage: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435:\n/import <code>\u041a041\u041e042e04271042a1 \u041a041\u041e042e04271042a2</code>',
+    promo_btn: '\ud83c\udfab \u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434',
+    promo_ask: '\u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434:',
+    promo_invalid: '\u274c \u041d\u0435\u0432\u0435\u0440\u043d\u044b\u0439 \u0438\u043b\u0438 \u043f\u0440\u043e\u0441\u0440\u043e\u0447\u0435\u043d\u043d\u044b\u0439 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434.',
+    promo_valid: '\u2705 \u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434 <b>{code}</b> \u043f\u0440\u0438\u043c\u0435\u043d\u0451\u043d! \u0421\u043a\u0438\u0434\u043a\u0430: <b>{d}%</b>',
+    promo_used: '\u26a0\ufe0f \u041b\u0438\u043c\u0438\u0442 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u0430 \u0438\u0441\u0447\u0435\u0440\u043f\u0430\u043d.',
+    promo_active: '\u2705 \u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0439 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434: <b>{code}</b> (\u0441\u043a\u0438\u0434\u043a\u0430 {d}%)',
+    promo_title: '\ud83c\udfab <b>\u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u044b</b>',
+    promo_empty: '\u041d\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u043d\u044b\u0445 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u043e\u0432.',
+    promo_list: '\ud83c\udfab <b>\u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u044b:</b>\n{list}',
+    promo_line: '<code>{code}</code> \u2014 \u0441\u043a\u0438\u0434\u043a\u0430 {d}%, {uses}/{max} \u0438\u0441\u043f.',
+    promo_created: '\u2705 \u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434 <b>{code}</b> \u0441\u043e\u0437\u0434\u0430\u043d: \u0441\u043a\u0438\u0434\u043a\u0430 {d}%, {max} \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439.',
+    promo_deleted: '\u274c \u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434 <b>{code}</b> \u0443\u0434\u0430\u043b\u0451\u043d.',
+    promo_delete_fail: '\u274c \u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434 <b>{code}</b> \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d.',
+    createpromo_usage: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435:\n/createpromo <code>\u041d04104170416504180434 \u0421\u041a04180434404140430% \u041a041e041b0418044 04270431042f04200431043a043e04390442</code>',
+    history_title: '\uD83D\uDCC4 <b>\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u043f\u043e\u043a\u0443\u043f\u043e\u043a</b>\n{list}',
+    history_empty: '\u041f\u043e\u043a\u0443\u043f\u043e\u043a \u0435\u0449\u0451 \u043d\u0435\u0442.',
+    history_line: '<code>{key}</code> \u2192 {name} ({method}){promo}\n',
+    admin_panel_enhanced: '\ud83d\udcca <b>\u0410\u0434\u043c\u0438\u043d \u043f\u0430\u043d\u0435\u043b\u044c</b>\n\n{n}\n\u23f3 \u041e\u0436\u0438\u0434\u0430\u0435\u0442: {pending}\n\ud83c\udfab \u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0445 \u043f\u0440\u043e\u043c\u043e: {promos}\n\n\ud83d\udc41 /panel \u2014 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c\n/import \u2014 \u043a\u043b\u044e\u0447\u0438\n/createpromo \u2014 \u043f\u0440\u043e\u043c\u043e\n/promos \u2014 \u0441\u043f\u0438\u0441\u043e\u043a\n/history \u2014 \u043f\u043e\u043a\u0443\u043f\u043a\u0438',
     approved: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d. \u041a\u043b\u044e\u0447 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d.',
     rejected: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043e\u0442\u043a\u043b\u043e\u043d\u0451\u043d.',
 
@@ -343,6 +395,7 @@ bot.callbackQuery(/^menu_buy$/, async (ctx) => {
   const kb = new InlineKeyboard();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
+  kb.row().text(t.promo_btn, 'promo_enter');
   kb.row().text(t.back, 'back_start');
   try {
     await ctx.editMessageText(
@@ -469,6 +522,7 @@ bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
   const kb = new InlineKeyboard();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
+  kb.row().text(t.promo_btn, 'promo_enter');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
     t.plan_title + '\n\n' + t.plan_price + '\n' + t.plan_desc + '\n\n' + t.choose_payment,
@@ -477,7 +531,40 @@ bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
   await ctx.answerCallbackQuery();
 });
 
-// ── CryptoBot Payment (UNCHANGED) ────────────────────
+// ── Promo Code Entry ─────────────────────────────────
+
+bot.callbackQuery(/^promo_enter$/, async (ctx) => {
+  const lang = getLang(ctx);
+  const t = L[lang];
+  promoEntry.add(ctx.from.id);
+  const kb = new InlineKeyboard().text(t.back, 'buy_lifetime');
+  const txt = userPromo.has(ctx.from.id)
+    ? t.promo_active.replace('{code}', userPromo.get(ctx.from.id)).replace('{d}', promoCodes.get(userPromo.get(ctx.from.id))?.discount || '?') + '\n\n' + t.promo_ask
+    : t.promo_ask;
+  await ctx.editMessageText(t.promo_btn + '\n\n' + txt, { parse_mode: 'HTML', reply_markup: kb }).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
+bot.on('message:text', async (ctx) => {
+  if (!promoEntry.has(ctx.from.id)) return;
+  promoEntry.delete(ctx.from.id);
+  const lang = getLang(ctx);
+  const t = L[lang];
+  const code = ctx.message.text.trim().toUpperCase();
+  if (!promoCodes.has(code)) {
+    await ctx.reply(t.promo_invalid, { parse_mode: 'HTML' });
+    return;
+  }
+  const promo = promoCodes.get(code);
+  if (promo.uses >= promo.maxUses) {
+    await ctx.reply(t.promo_used + '\n' + t.promo_invalid, { parse_mode: 'HTML' });
+    return;
+  }
+  userPromo.set(ctx.from.id, code);
+  await ctx.reply(t.promo_valid.replace('{code}', code).replace('{d}', promo.discount), { parse_mode: 'HTML' });
+});
+
+// ── CryptoBot Payment ────────────────────────────────
 
 bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
   const lang = getLang(ctx);
@@ -490,6 +577,15 @@ bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
   }
   await ctx.answerCallbackQuery();
 
+  const promoCode = userPromo.get(ctx.from.id);
+  let promo = null;
+  let amount = 5;
+  if (promoCode && promoCodes.has(promoCode)) {
+    promo = promoCodes.get(promoCode);
+    if (promo.uses >= promo.maxUses) { userPromo.delete(ctx.from.id); promo = null; }
+    else { amount = promo.discount === 100 ? 0.1 : +(5 * (100 - promo.discount) / 100).toFixed(2); }
+  }
+
   const msg = await ctx.reply(t.creating, { parse_mode: 'HTML' });
   const chatId = msg.chat.id;
   const msgId = msg.message_id;
@@ -497,16 +593,17 @@ bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
+    const body = {
+      asset: 'USDT', amount: String(amount),
+      description: 'EncodeX Premium' + (promo ? ' (-' + promo.discount + '%)' : '') + ' \u2014 Lifetime',
+      paid_btn_name: 'openBot',
+      paid_btn_url: 'https://t.me/' + (BOT_USERNAME || 'encodex_bot'),
+      payload: 'crypto_lifetime_' + ctx.from.id + (promo ? '_' + promoCode : '')
+    };
     const res = await fetch('https://pay.crypt.bot/api/createInvoice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Crypto-Pay-API-Token': CRYPTOBOT_TOKEN },
-      body: JSON.stringify({
-        asset: 'USDT', amount: 5,
-        description: 'EncodeX Premium \u2014 Lifetime',
-        paid_btn_name: 'openBot',
-        paid_btn_url: 'https://t.me/' + (BOT_USERNAME || 'encodex_bot'),
-        payload: 'crypto_lifetime_' + ctx.from.id
-      }),
+      body: JSON.stringify(body),
       signal: controller.signal
     });
     clearTimeout(timer);
@@ -521,8 +618,9 @@ bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
     const kb = new InlineKeyboard()
       .url(t.pay_usdt, data.result.bot_invoice_url).row()
       .text(t.back, 'buy_lifetime');
+    const priceLine = amount + ' USDT' + (promo ? ' (\u2193' + promo.discount + '%)' : '');
     await ctx.api.editMessageText(chatId, msgId,
-      '<b>' + t.crypto_pay_title + '</b>\n\n5 USDT\n\n' + t.crypto_pay_info,
+      '<b>' + t.crypto_pay_title + '</b>\n\n' + priceLine + '\n\n' + t.crypto_pay_info,
       { parse_mode: 'HTML', reply_markup: kb }
     );
   } catch (e) {
@@ -538,12 +636,25 @@ bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
 bot.callbackQuery(/^pay_card_transfer_lifetime$/, async (ctx) => {
   const lang = getLang(ctx);
   const t = L[lang];
+  const promoCode = userPromo.get(ctx.from.id);
+  let promo = null;
+  let priceText = '150 UAH';
+  if (promoCode && promoCodes.has(promoCode)) {
+    promo = promoCodes.get(promoCode);
+    if (promo.uses < promo.maxUses) {
+      const discounted = promo.discount === 100 ? 1 : Math.round(150 * (100 - promo.discount) / 100);
+      priceText = discounted + ' UAH (\u2193' + promo.discount + '%)';
+    } else {
+      userPromo.delete(ctx.from.id);
+      promo = null;
+    }
+  }
   const kb = new InlineKeyboard()
     .text(t.card_transfer_sent, 'card_transfer_done')
     .row()
     .text(t.back, 'buy_lifetime');
   await ctx.editMessageText(
-    t.card_transfer_title + '\n\n' + t.card_transfer_info.replace('{details}', esc(CARD_DETAILS)),
+    '<b>' + t.card_transfer_title + '</b>\n\n' + priceText + '\n\n' + t.card_transfer_info.replace('{details}', esc(CARD_DETAILS)),
     { parse_mode: 'HTML', reply_markup: kb }
   ).catch(() => {});
   await ctx.answerCallbackQuery();
@@ -572,11 +683,12 @@ bot.on(':photo', async (ctx) => {
   const id = ++pendingIdCounter;
   const userId = ctx.from.id;
   const name = ctx.from.first_name || 'User';
+  const promoCode = userPromo.get(userId) || null;
   const msg = await ctx.reply(
     t.card_transfer_await.replace('{id}', id),
     { parse_mode: 'HTML' }
   );
-  pendingPayments.set(id, { id, userId, name, lang, photoMsgId: msg.message_id, chatId: msg.chat.id });
+  pendingPayments.set(id, { id, userId, name, lang, promoCode, photoMsgId: msg.message_id, chatId: msg.chat.id });
 
   // Notify admins
   const fileId = ctx.msg.photo[ctx.msg.photo.length - 1].file_id;
@@ -604,6 +716,13 @@ bot.callbackQuery(/^approve_payment_(\d+)$/, async (ctx) => {
   const lang = p.lang || 'en';
   const t = L[lang];
   const key = issueKey(String(p.userId), p.name, 'card_transfer');
+
+  if (p.promoCode && promoCodes.has(p.promoCode)) {
+    const promo = promoCodes.get(p.promoCode);
+    promo.uses++;
+  }
+  addHistory({ key, userId: String(p.userId), name: p.name, method: 'card_transfer', promo: p.promoCode || null });
+
   try {
     await bot.api.sendMessage(p.userId,
       t.success + '\n\n' + t.success_info.replace('{key}', key),
@@ -712,24 +831,7 @@ bot.command('testcrypto', async (ctx) => {
 
 // ── Admin Panel ──────────────────────────────────────
 
-bot.command('panel', async (ctx) => {
-  if (!ADMIN_IDS.includes(ctx.from.id)) return;
-  const lang = getLang(ctx);
-  const t = L[lang];
-  const available = Object.values(store.keys).filter(k => !k.userId).length;
-  const recent = Object.values(store.keys).sort((a, b) => b.time - a.time).slice(0, 5);
-  let recentText = recent.map(e =>
-    (e.userId ? '\u2705' : '\u26aa') + ' <code>' + e.key.slice(0, 16) + '...</code> ' + (e.userId ? '\u2192 ' + esc(e.name || e.userId) : '\ud83d\udfe2 free')
-  ).join('\n');
-  await ctx.reply(
-    t.admin_panel.replace('{n}',
-      '\uD83D\uDCCA <b>Keys:</b> ' + store.total + ' total, ' + store.sold + ' sold, ' + available + ' available\n' +
-      '\u23f3 <b>Pending:</b> ' + pendingPayments.size + '\n\n' +
-      '<b>\uD83D\uDD0D Recent (last 5):</b>\n' + recentText
-    ),
-    { parse_mode: 'HTML' }
-  );
-});
+// ── Admin Commands ───────────────────────────────────
 
 bot.command('import', async (ctx) => {
   if (!ADMIN_IDS.includes(ctx.from.id)) return;
@@ -753,7 +855,86 @@ bot.command('import', async (ctx) => {
   );
 });
 
-// ── Express (UNCHANGED) ──────────────────────────────
+// ── Enhanced Admin Panel ─────────────────────────────
+
+bot.command('panel', async (ctx) => {
+// ... (keep existing panel logic, just update display) ...
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const lang = getLang(ctx);
+  const t = L[lang];
+  const available = Object.values(store.keys).filter(k => !k.userId).length;
+  const recent = Object.values(store.keys).sort((a, b) => b.time - a.time).slice(0, 5);
+  let recentText = recent.map(e =>
+    (e.userId ? '\u2705' : '\u26aa') + ' <code>' + e.key.slice(0, 16) + '...</code> ' + (e.userId ? '\u2192 ' + esc(e.name || e.userId) : '\ud83d\udfe2 free')
+  ).join('\n');
+  const activePromos = [...promoCodes.entries()].filter(([,p]) => p.uses < p.maxUses).length;
+  await ctx.reply(
+    t.admin_panel_enhanced
+      .replace('{n}', '\uD83D\uDCCA <b>Keys:</b> ' + store.total + ' total, ' + store.sold + ' sold, ' + available + ' available\n\n<b>\uD83D\uDD0D Recent:</b>\n' + recentText)
+      .replace('{pending}', pendingPayments.size)
+      .replace('{promos}', activePromos),
+    { parse_mode: 'HTML' }
+  );
+});
+
+// ── /createpromo ─────────────────────────────────────
+
+bot.command('createpromo', async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const lang = getLang(ctx);
+  const t = L[lang];
+  const parts = (ctx.message?.text || '').split(/\s+/);
+  if (parts.length < 4) { await ctx.reply(t.createpromo_usage, { parse_mode: 'HTML' }); return; }
+  const code = parts[1].toUpperCase();
+  const discount = Math.min(100, Math.max(1, parseInt(parts[2]) || 0));
+  const maxUses = parseInt(parts[3]) || 1;
+  promoCodes.set(code, { code, discount, maxUses, uses: 0, createdBy: ctx.from.id, createdAt: Date.now() });
+  await ctx.reply(t.promo_created.replace('{code}', code).replace('{d}', discount).replace('{max}', maxUses), { parse_mode: 'HTML' });
+});
+
+// ── /promos ──────────────────────────────────────────
+
+bot.command('promos', async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const lang = getLang(ctx);
+  const t = L[lang];
+  if (!promoCodes.size) { await ctx.reply(t.promo_empty, { parse_mode: 'HTML' }); return; }
+  const lines = [...promoCodes.entries()].map(([code, p]) =>
+    t.promo_line.replace('{code}', code).replace('{d}', p.discount).replace('{uses}', p.uses).replace('{max}', p.maxUses)
+  ).join('\n');
+  await ctx.reply(t.promo_list.replace('{list}', lines), { parse_mode: 'HTML' });
+});
+
+// ── /deletepromo ─────────────────────────────────────
+
+bot.command('deletepromo', async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const lang = getLang(ctx);
+  const t = L[lang];
+  const code = (ctx.message?.text || '').split(/\s+/)[1]?.toUpperCase();
+  if (!code || !promoCodes.has(code)) { await ctx.reply(t.promo_delete_fail.replace('{code}', code || ''), { parse_mode: 'HTML' }); return; }
+  promoCodes.delete(code);
+  await ctx.reply(t.promo_deleted.replace('{code}', code), { parse_mode: 'HTML' });
+});
+
+// ── /history ─────────────────────────────────────────
+
+bot.command('history', async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const lang = getLang(ctx);
+  const t = L[lang];
+  if (!purchaseHistory.length) { await ctx.reply(t.history_empty, { parse_mode: 'HTML' }); return; }
+  const lines = purchaseHistory.slice(-30).reverse().map(e =>
+    t.history_line
+      .replace('{key}', e.key.slice(0, 20) + '...')
+      .replace('{name}', esc(e.name || e.userId))
+      .replace('{method}', e.method)
+      .replace('{promo}', e.promo ? ' \ud83c\udfab ' + e.promo : '')
+  ).join('');
+  await ctx.reply(t.history_title.replace('{list}', lines), { parse_mode: 'HTML' });
+});
+
+// ── Express ──────────────────────────────────────────
 
 const app = express();
 app.use(express.json());
@@ -762,10 +943,20 @@ app.post('/cryptobot-webhook', async (req, res) => {
   try {
     if (req.body?.update_type === 'invoice_paid') {
       const payload = req.body.payload || '';
-      const userId = String(payload.split('_').pop() || '');
+      const parts = payload.split('_');
+      const userId = parts[2];
+      const promoCode = parts.length > 3 ? parts.slice(3).join('_') : null;
       const key = issueKey(userId, 'crypto', 'cryptobot');
       const lang = userLang.get(Number(userId)) || 'en';
       const t = L[lang];
+
+      if (promoCode && promoCodes.has(promoCode)) {
+        const p = promoCodes.get(promoCode);
+        p.uses++;
+        if (p.uses >= p.maxUses) { /* keep, just mark */ }
+      }
+      addHistory({ key, userId, name: 'crypto', method: 'cryptobot', promo: promoCode || null });
+
       try {
         await bot.api.sendMessage(userId,
           t.success + '\n\n' + t.success_info.replace('{key}', key),
