@@ -547,10 +547,12 @@ bot.callbackQuery(/^promo_enter$/, async (ctx) => {
 
 bot.on('message:text', async (ctx) => {
   if (!promoEntry.has(ctx.from.id)) return;
+  const text = ctx.message.text.trim();
+  if (text.startsWith('/')) return; // skip commands
   promoEntry.delete(ctx.from.id);
   const lang = getLang(ctx);
   const t = L[lang];
-  const code = ctx.message.text.trim().toUpperCase();
+  const code = text.toUpperCase();
   if (!promoCodes.has(code)) {
     await ctx.reply(t.promo_invalid, { parse_mode: 'HTML' });
     return;
