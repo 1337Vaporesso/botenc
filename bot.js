@@ -54,6 +54,8 @@ const purchaseHistory = [];
 const userPromo = new Map();
 const promoEntry = new Set();
 const creatingPromo = new Map();
+const editingPromo = new Map();
+const deletingPromo = new Map();
 const importingKeys = new Set();
 
 function addHistory(entry) { purchaseHistory.push({ time: Date.now(), ...entry }); }
@@ -460,6 +462,75 @@ bot.on('message:text', async (ctx) => {
     }
   }
 
+  // Flow: Edit Promo
+  if (editingPromo.has(userId)) {
+    const state = editingPromo.get(userId);
+    const t = L[getLang(ctx)];
+
+    if (state.step === 'name') {
+      const code = text.toUpperCase();
+      if (!promoCodes.has(code)) {
+        await ctx.reply(t.promo_delete_fail.replace('{code}', code), { parse_mode: 'HTML' });
+        editingPromo.delete(userId);
+        return;
+      }
+      state.code = code;
+      const p = promoCodes.get(code);
+      state.step = 'discount';
+      await ctx.reply(
+        (getLang(ctx) === 'ru' ? '\u0422\u0435\u043a\u0443\u0449\u0430\u044f \u0441\u043a\u0438\u0434\u043a\u0430: ' + p.discount + '%\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u0432\u0443\u044e \u0441\u043a\u0438\u0434\u043a\u0443 \u0432 % (1-100):' : 'Current discount: ' + p.discount + '%\nEnter new discount % (1-100):'),
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
+    if (state.step === 'discount') {
+      const d = parseInt(text);
+      if (isNaN(d) || d < 1 || d > 100) {
+        await ctx.reply(
+          (getLang(ctx) === 'ru' ? '\u041e\u0448\u0438\u0431\u043a\u0430: \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u0447\u0438\u0441\u043b\u043e \u043e\u0442 1 \u0434\u043e 100' : 'Error: enter a number from 1 to 100'),
+          { parse_mode: 'HTML' }
+        );
+        return;
+      }
+      state.discount = d;
+      state.step = 'maxUses';
+      const p = promoCodes.get(state.code);
+      await ctx.reply(
+        (getLang(ctx) === 'ru' ? '\u0422\u0435\u043a\u0443\u0449\u0438\u0435 \u043c\u0430\u043a\u0441. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u044f: ' + p.maxUses + '\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u0432\u043e\u0435 \u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0430\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u0439:' : 'Current max uses: ' + p.maxUses + '\nEnter new max uses:'),
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
+    if (state.step === 'maxUses') {
+      const maxUses = parseInt(text) || 1;
+      editingPromo.delete(userId);
+      const p = promoCodes.get(state.code);
+      p.discount = state.discount;
+      p.maxUses = maxUses;
+      await ctx.reply(
+        '\u2705 ' + (getLang(ctx) === 'ru' ? '\u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434' : 'Promo') + ' <b>' + state.code + '</b> ' +
+        (getLang(ctx) === 'ru' ? '\u043e\u0431\u043d\u043e\u0432\u043b\u0451\u043d: \u0441\u043a\u0438\u0434\u043a\u0430' : 'updated:') + ' <b>' + p.discount + '%</b>, ' +
+        (getLang(ctx) === 'ru' ? 'макс. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439' : 'max uses') + ': <b>' + p.maxUses + '</b>',
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
+  }
+
+  // Flow: Delete Promo
+  if (deletingPromo.has(userId)) {
+    deletingPromo.delete(userId);
+    const t = L[getLang(ctx)];
+    const code = text.toUpperCase();
+    if (!promoCodes.has(code)) {
+      await ctx.reply(t.promo_delete_fail.replace('{code}', code), { parse_mode: 'HTML' });
+      return;
+    }
+    promoCodes.delete(code);
+    await ctx.reply(t.promo_deleted.replace('{code}', code), { parse_mode: 'HTML' });
+    return;
+  }
+
   // Flow: Enter Promo Code (existing)
   if (promoEntry.has(userId)) {
     promoEntry.delete(userId);
@@ -832,7 +903,13 @@ bot.callbackQuery(/^ad_promos$/, async (ctx) => {
   const lines = [...promoCodes.entries()].map(([code, p]) =>
     t.promo_line.replace('{code}', code).replace('{d}', p.discount).replace('{uses}', p.uses).replace('{max}', p.maxUses)
   ).join('\n');
-  await ctx.editMessageText(t.promo_list.replace('{list}', lines), { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(t.back, 'menu_admin') }).catch(() => {});
+  await ctx.editMessageText(t.promo_list.replace('{list}', lines), {
+    parse_mode: 'HTML',
+    reply_markup: new InlineKeyboard()
+      .text('\u270f\ufe0f ' + (getLang(ctx) === 'ru' ? '\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c' : 'Edit'), 'ad_editpromo_flow')
+      .text('\u274c ' + (getLang(ctx) === 'ru' ? '\u0423\u0434\u0430\u043b\u0438\u0442\u044c' : 'Delete'), 'ad_delpromo_flow').row()
+      .text(t.back, 'menu_admin')
+  }).catch(() => {});
   await ctx.answerCallbackQuery();
 });
 
@@ -873,6 +950,28 @@ bot.callbackQuery(/^ad_createpromo_flow$/, async (ctx) => {
   creatingPromo.set(ctx.from.id, { step: 'name' });
   await ctx.editMessageText(
     '\ud83c\udfaf ' + (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u0430:' : 'Enter promo code name:'),
+    { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(L[getLang(ctx)].back, 'menu_admin') }
+  ).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
+// Edit Promo flow
+bot.callbackQuery(/^ad_editpromo_flow$/, async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  editingPromo.set(ctx.from.id, { step: 'name' });
+  await ctx.editMessageText(
+    '\u270f\ufe0f ' + (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u0430 \u0434\u043b\u044f \u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f:' : 'Enter promo code name to edit:'),
+    { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(L[getLang(ctx)].back, 'menu_admin') }
+  ).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
+// Delete Promo flow
+bot.callbackQuery(/^ad_delpromo_flow$/, async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  deletingPromo.set(ctx.from.id, { step: 'name' });
+  await ctx.editMessageText(
+    '\u274c ' + (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u0430 \u0434\u043b\u044f \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f:' : 'Enter promo code name to delete:'),
     { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(L[getLang(ctx)].back, 'menu_admin') }
   ).catch(() => {});
   await ctx.answerCallbackQuery();
