@@ -53,6 +53,8 @@ const promoCodes = new Map();
 const purchaseHistory = [];
 const userPromo = new Map();
 const promoEntry = new Set();
+const creatingPromo = new Map();
+const importingKeys = new Set();
 
 function addHistory(entry) { purchaseHistory.push({ time: Date.now(), ...entry }); }
 
@@ -389,23 +391,92 @@ bot.callbackQuery(/^promo_enter$/, async (ctx) => {
 });
 
 bot.on('message:text', async (ctx) => {
-  if (!promoEntry.has(ctx.from.id)) return;
+  const userId = ctx.from.id;
   const text = ctx.message.text.trim();
   if (text.startsWith('/')) return;
-  promoEntry.delete(ctx.from.id);
-  const t = L[getLang(ctx)];
-  const code = text.toUpperCase();
-  if (!promoCodes.has(code)) {
-    await ctx.reply(t.promo_invalid, { parse_mode: 'HTML' });
+
+  // Flow: Add Keys
+  if (importingKeys.has(userId)) {
+    importingKeys.delete(userId);
+    const t = L[getLang(ctx)];
+    const parts = text.split(/[\s,;\n]+/).filter(Boolean);
+    let imported = 0, dups = 0;
+    for (const raw of parts) {
+      const key = raw.trim().toUpperCase();
+      if (key.length < 5) continue;
+      if (saveKey(key)) imported++; else dups++;
+    }
+    await ctx.reply(
+      '\u2705 ' + (getLang(ctx) === 'ru' ? '\u0418\u043c\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043e' : 'Imported') + ' <b>' + imported + '</b> ' +
+      (getLang(ctx) === 'ru' ? '\u043a\u043b\u044e\u0447\u0435\u0439' : 'keys') + '. ' +
+      (dups ? (dups + ' ' + (getLang(ctx) === 'ru' ? '\u0434\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u043e\u0432 \u043f\u0440\u043e\u043f\u0443\u0449\u0435\u043d\u043e' : 'duplicates skipped')) : ''),
+      { parse_mode: 'HTML' }
+    );
     return;
   }
-  const promo = promoCodes.get(code);
-  if (promo.uses >= promo.maxUses) {
-    await ctx.reply(t.promo_used, { parse_mode: 'HTML' });
-    return;
+
+  // Flow: Create Promo
+  if (creatingPromo.has(userId)) {
+    const state = creatingPromo.get(userId);
+    const t = L[getLang(ctx)];
+
+    if (state.step === 'name') {
+      state.name = text.toUpperCase();
+      state.step = 'discount';
+      await ctx.reply(
+        (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0441\u043a\u0438\u0434\u043a\u0443 \u0432 % (1-100):' : 'Enter discount % (1-100):'),
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
+    if (state.step === 'discount') {
+      const d = parseInt(text);
+      if (isNaN(d) || d < 1 || d > 100) {
+        await ctx.reply(
+          (getLang(ctx) === 'ru' ? '\u041e\u0448\u0438\u0431\u043a\u0430: \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u0447\u0438\u0441\u043b\u043e \u043e\u0442 1 \u0434\u043e 100' : 'Error: enter a number from 1 to 100'),
+          { parse_mode: 'HTML' }
+        );
+        return;
+      }
+      state.discount = d;
+      state.step = 'maxUses';
+      await ctx.reply(
+        (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0430\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u0439:' : 'Enter max uses:'),
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
+    if (state.step === 'maxUses') {
+      const maxUses = parseInt(text) || 1;
+      creatingPromo.delete(userId);
+      promoCodes.set(state.name, { code: state.name, discount: state.discount, maxUses, uses: 0, createdBy: userId, createdAt: Date.now() });
+      await ctx.reply(
+        '\u2705 ' + (getLang(ctx) === 'ru' ? '\u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434' : 'Promo') + ' <b>' + state.name + '</b> ' +
+        (getLang(ctx) === 'ru' ? '\u0441\u043e\u0437\u0434\u0430\u043d: \u0441\u043a\u0438\u0434\u043a\u0430' : 'created:') + ' <b>' + state.discount + '%</b>, ' +
+        (getLang(ctx) === 'ru' ? 'макс. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439' : 'max uses') + ': <b>' + maxUses + '</b>',
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
   }
-  userPromo.set(ctx.from.id, code);
-  await ctx.reply(t.promo_valid.replace('{code}', code).replace('{d}', promo.discount), { parse_mode: 'HTML' });
+
+  // Flow: Enter Promo Code (existing)
+  if (promoEntry.has(userId)) {
+    promoEntry.delete(userId);
+    const t = L[getLang(ctx)];
+    const code = text.toUpperCase();
+    if (!promoCodes.has(code)) {
+      await ctx.reply(t.promo_invalid, { parse_mode: 'HTML' });
+      return;
+    }
+    const promo = promoCodes.get(code);
+    if (promo.uses >= promo.maxUses) {
+      await ctx.reply(t.promo_used, { parse_mode: 'HTML' });
+      return;
+    }
+    userPromo.set(userId, code);
+    await ctx.reply(t.promo_valid.replace('{code}', code).replace('{d}', promo.discount), { parse_mode: 'HTML' });
+  }
 });
 
 bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
@@ -692,9 +763,10 @@ bot.callbackQuery(/^menu_admin$/, async (ctx) => {
     parse_mode: 'HTML',
     reply_markup: new InlineKeyboard()
       .text(t.admin_btn_panel, 'ad_panel').text(t.admin_btn_pending, 'ad_pending').text(t.admin_btn_history, 'ad_history').row()
-      .text(t.admin_btn_promos, 'ad_promos').text(t.admin_btn_import, 'ad_import').text(t.admin_btn_genkeys, 'ad_genkeys').row()
-      .text(t.admin_btn_crypto, 'ad_testcrypto')
-      .row().text(t.back, 'menu_main')
+      .text('\ud83c\udfaf ' + (getLang(ctx) === 'ru' ? '\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u043f\u0440\u043e\u043c\u043e' : 'Create Promo'), 'ad_createpromo_flow')
+      .text('\u2795 ' + (getLang(ctx) === 'ru' ? '\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043a\u043b\u044e\u0447\u0438' : 'Add Keys'), 'ad_addkeys_flow').row()
+      .text(t.admin_btn_promos, 'ad_promos').text(t.admin_btn_genkeys, 'ad_genkeys').text(t.admin_btn_crypto, 'ad_testcrypto').row()
+      .text(t.back, 'menu_main')
   }).catch(() => {});
   await ctx.answerCallbackQuery();
 });
@@ -793,6 +865,28 @@ bot.callbackQuery(/^ad_testcrypto$/, async (ctx) => {
       await ctx.reply(host + '/getMe error:\n<code>' + esc(e.message) + '</code>', { parse_mode: 'HTML' });
     }
   }
+});
+
+// Create Promo flow
+bot.callbackQuery(/^ad_createpromo_flow$/, async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  creatingPromo.set(ctx.from.id, { step: 'name' });
+  await ctx.editMessageText(
+    '\ud83c\udfaf ' + (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u0430:' : 'Enter promo code name:'),
+    { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(L[getLang(ctx)].back, 'menu_admin') }
+  ).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
+// Add Keys flow
+bot.callbackQuery(/^ad_addkeys_flow$/, async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  importingKeys.add(ctx.from.id);
+  await ctx.editMessageText(
+    '\u2795 ' + (getLang(ctx) === 'ru' ? '\u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 \u043a\u043b\u044e\u0447\u0438 (\u0447\u0435\u0440\u0435\u0437 \u043f\u0440\u043e\u0431\u0435\u043b \u0438\u043b\u0438 \u0441 \u043d\u043e\u0432\u043e\u0439 \u0441\u0442\u0440\u043e\u043a\u0438):' : 'Send keys (space-separated or line-by-line):'),
+    { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(L[getLang(ctx)].back, 'menu_admin') }
+  ).catch(() => {});
+  await ctx.answerCallbackQuery();
 });
 
 bot.command('pending', async (ctx) => {
