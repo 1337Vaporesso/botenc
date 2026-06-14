@@ -133,7 +133,7 @@ const L = {
     stats: '\ud83d\udcca <b>Stats:</b> {n}',
     genkeys: '\ud83d\udd11 <b>Generated 10 keys:</b>\n<code>{keys}</code>',
     import_ok: '\u2705 Imported <b>{n}</b> keys. {dup} duplicates skipped.',
-    import_usage: 'Usage:\n/import <code>KEY1 KEY2 KEY3</code>',
+    import_usage: 'Usage:\n/addkeys <code>KEY1 KEY2 KEY3</code>',
     promo_btn: '\ud83c\udfab Promo Code',
     promo_ask: 'Send me your promo code:',
     promo_invalid: '\u274c Invalid or expired promo code.',
@@ -151,7 +151,7 @@ const L = {
     history_title: '\uD83D\uDCC4 <b>Purchase History</b>\n{list}',
     history_empty: 'No purchases yet.',
     history_line: '<code>{key}</code> \u2192 {name} ({method}){promo}\n',
-    panel_title: '\ud83d\udcca <b>Admin Panel</b>\n\n{n}\n\u23f3 Pending: {pending}\n\ud83c\udfab Active promos: {promos}\n\n\ud83d\udc41 /panel \u2014 refresh\n/import \u2014 keys\n/createpromo \u2014 promo\n/promos \u2014 list\n/history \u2014 purchases',
+    panel_title: '\ud83d\udcca <b>Admin Panel</b>\n\n{n}\n\u23f3 Pending: {pending}\n\ud83c\udfab Active promos: {promos}\n\n\ud83d\udc41 /panel \u2014 refresh\n/addkeys \u2014 keys\n/createpromo \u2014 promo\n/promos \u2014 list\n/history \u2014 purchases',
     approved: 'Approved payment #{id}. Key sent to user.',
     rejected: 'Rejected payment #{id}.',
     profile_title: '\ud83d\udc64 <b>Your Profile</b>',
@@ -161,6 +161,7 @@ const L = {
     profile_status: '\ud83d\udfe2 Status: <b>Free user</b>',
     profile_status_premium: '\ud83d\udfe1 Status: <b>Premium</b>',
     profile_no_keys: 'You don\u2019t have any active licenses yet.',
+    profile_change_lang: '\ud83c\udf10 Change Language',
     licenses_title: '\ud83d\udccb <b>My Licenses</b>',
     licenses_empty: 'You don\u2019t have any active licenses.\n\nTap <b>Buy Premium</b> to get one!',
     licenses_key: '\ud83d\udd11 Key: <code>{key}</code>\n\u2728 Method: {method}\n\ud83d\udcc5 Date: {date}',
@@ -231,7 +232,7 @@ const L = {
     stats: '\ud83d\udcca <b>\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430:</b> {n}',
     genkeys: '\ud83d\udd11 <b>\u0421\u0433\u0435\u043d\u0435\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043e 10 \u043a\u043b\u044e\u0447\u0435\u0439:</b>\n<code>{keys}</code>',
     import_ok: '\u2705 \u0418\u043c\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043e <b>{n}</b> \u043a\u043b\u044e\u0447\u0435\u0439. {dup} \u0434\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u043e\u0432 \u043f\u0440\u043e\u043f\u0443\u0449\u0435\u043d\u043e.',
-    import_usage: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435:\n/import <code>\u041a041042e042e042711 \u041a041042e042e042712</code>',
+    import_usage: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435:\n/addkeys <code>\u041a041042e042e042711 \u041a041042e042e042712</code>',
     promo_btn: '\ud83c\udfab \u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434',
     promo_ask: '\u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434:',
     promo_invalid: '\u274c \u041d\u0435\u0432\u0435\u0440\u043d\u044b\u0439 \u0438\u043b\u0438 \u043f\u0440\u043e\u0441\u0440\u043e\u0447\u0435\u043d\u043d\u044b\u0439 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434.',
@@ -249,7 +250,7 @@ const L = {
     history_title: '\uD83D\uDCC4 <b>\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u043f\u043e\u043a\u0443\u043f\u043e\u043a</b>\n{list}',
     history_empty: '\u041f\u043e\u043a\u0443\u043f\u043e\u043a \u0435\u0449\u0451 \u043d\u0435\u0442.',
     history_line: '<code>{key}</code> \u2192 {name} ({method}){promo}\n',
-    panel_title: '\ud83d\udcca <b>\u0410\u0434\u043c\u0438\u043d \u043f\u0430\u043d\u0435\u043b\u044c</b>\n\n{n}\n\u23f3 \u041e\u0436\u0438\u0434\u0430\u0435\u0442: {pending}\n\ud83c\udfab \u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0445 \u043f\u0440\u043e\u043c\u043e: {promos}\n\n\ud83d\udc41 /panel \u2014 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c\n/import \u2014 \u043a\u043b\u044e\u0447\u0438\n/createpromo \u2014 \u043f\u0440\u043e\u043c\u043e\n/promos \u2014 \u0441\u043f\u0438\u0441\u043e\u043a\n/history \u2014 \u043f\u043e\u043a\u0443\u043f\u043a\u0438',
+    panel_title: '\ud83d\udcca <b>\u0410\u0434\u043c\u0438\u043d \u043f\u0430\u043d\u0435\u043b\u044c</b>\n\n{n}\n\u23f3 \u041e\u0436\u0438\u0434\u0430\u0435\u0442: {pending}\n\ud83c\udfab \u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0445 \u043f\u0440\u043e\u043c\u043e: {promos}\n\n\ud83d\udc41 /panel \u2014 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c\n/addkeys \u2014 \u043a\u043b\u044e\u0447\u0438\n/createpromo \u2014 \u043f\u0440\u043e\u043c\u043e\n/promos \u2014 \u0441\u043f\u0438\u0441\u043e\u043a\n/history \u2014 \u043f\u043e\u043a\u0443\u043f\u043a\u0438',
     approved: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d. \u041a\u043b\u044e\u0447 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d.',
     rejected: '\u041f\u043b\u0430\u0442\u0451\u0436 #{id} \u043e\u0442\u043a\u043b\u043e\u043d\u0451\u043d.',
     profile_title: '\ud83d\udc64 <b>\u0412\u0430\u0448 \u043f\u0440\u043e\u0444\u0438\u043b\u044c</b>',
@@ -259,6 +260,7 @@ const L = {
     profile_status: '\ud83d\udfe2 \u0421\u0442\u0430\u0442\u0443\u0441: <b>\u0411\u0435\u0441\u043f\u043b\u0430\u0442\u043d\u044b\u0439</b>',
     profile_status_premium: '\ud83d\udfe1 \u0421\u0442\u0430\u0442\u0443\u0441: <b>Premium</b>',
     profile_no_keys: '\u0423 \u0432\u0430\u0441 \u0435\u0449\u0451 \u043d\u0435\u0442 \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0445 \u043b\u0438\u0446\u0435\u043d\u0437\u0438\u0439.',
+    profile_change_lang: '\ud83c\udf10 \u0421\u043c\u0435\u043d\u0438\u0442\u044c \u044f\u0437\u044b\u043a',
     licenses_title: '\ud83d\udccb <b>\u041c\u043e\u0438 \u043b\u0438\u0446\u0435\u043d\u0437\u0438\u0438</b>',
     licenses_empty: '\u0423 \u0432\u0430\u0441 \u0435\u0449\u0451 \u043d\u0435\u0442 \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0445 \u043b\u0438\u0446\u0435\u043d\u0437\u0438\u0439.\n\n\u041d\u0430\u0436\u043c\u0438\u0442\u0435 <b>\u041a\u0443\u043f\u0438\u0442\u044c Premium</b>, \u0447\u0442\u043e\u0431\u044b \u043f\u0440\u0438\u043e\u0431\u0440\u0435\u0441\u0442\u0438 \u043b\u0438\u0446\u0435\u043d\u0437\u0438\u044e!',
     licenses_key: '\ud83d\udd11 \u041a\u043b\u044e\u0447: <code>{key}</code>\n\u2728 \u041c\u0435\u0442\u043e\u0434: {method}\n\ud83d\udcc5 \u0414\u0430\u0442\u0430: {date}',
@@ -580,6 +582,21 @@ bot.callbackQuery(/^back_start$/, async (ctx) => {
   await ctx.answerCallbackQuery();
 });
 
+// Language change from Profile
+bot.callbackQuery(/^profile_lang$/, async (ctx) => {
+  const cur = getLang(ctx);
+  const kb = new InlineKeyboard()
+    .text('\ud83c\uddf7\ud83c\uddfa \u0420\u0443\u0441\u0441\u043a\u0438\u0439', 'lang_ru')
+    .text('\ud83c\uddfa\ud83c\uddf8 English', 'lang_en');
+  await ctx.editMessageText(
+    '\ud83c\udf10 <b>' + (cur === 'ru' ? '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u044f\u0437\u044b\u043a' : 'Choose your language') + '</b>\n\n' +
+    '\ud83d\udc41 ' + (cur === 'ru' ? '\u0422\u0435\u043a\u0443\u0449\u0438\u0439: ' : 'Current: ') +
+    (cur === 'ru' ? '\u0420\u0443\u0441\u0441\u043a\u0438\u0439' : 'English'),
+    { parse_mode: 'HTML', reply_markup: kb }
+  ).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
 bot.callbackQuery(/^menu_profile$/, async (ctx) => {
   const t = L[getLang(ctx)];
   const id = ctx.from.id;
@@ -593,7 +610,8 @@ bot.callbackQuery(/^menu_profile$/, async (ctx) => {
   await ctx.editMessageText(txt, {
     parse_mode: 'HTML',
     reply_markup: new InlineKeyboard()
-      .text('\ud83d\udc8e ' + (getLang(ctx) === 'ru' ? '\u041a\u0443\u043f\u0438\u0442\u044c Premium' : 'Buy Premium'), 'menu_buy').row()
+      .text('\ud83d\udc8e ' + (getLang(ctx) === 'ru' ? '\u041a\u0443\u043f\u0438\u0442\u044c Premium' : 'Buy Premium'), 'menu_buy')
+      .text(t.profile_change_lang, 'profile_lang').row()
       .text(t.back, 'menu_main')
   }).catch(() => {});
   await ctx.answerCallbackQuery();
@@ -812,7 +830,7 @@ bot.command('testcrypto', async (ctx) => {
   }
 });
 
-bot.command('import', async (ctx) => {
+bot.command('addkeys', async (ctx) => {
   if (!ADMIN_IDS.includes(ctx.from.id)) return;
   const t = L[getLang(ctx)];
   const parts = (ctx.message?.text || '').split(/[\s,;\n]+/).slice(1).filter(Boolean);
