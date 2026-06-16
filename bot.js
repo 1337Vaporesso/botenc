@@ -4,6 +4,9 @@ const { randomUUID } = require('crypto');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CRYPTOBOT_TOKEN = process.env.CRYPTOBOT_TOKEN;
+const AMYPAY_KEY = process.env.AMYPAY_KEY || '57fff6e60270fe114e1f6170e29682e2';
+const AMYPAY_SECRET_2 = process.env.AMYPAY_SECRET_2 || 'd7fb0adc08837c811b5f0e0d';
+const AMYPAY_PRICE = Number(process.env.AMYPAY_PRICE) || 300;
 const MY_ID = 8006368888;
 const ADMIN_IDS = [MY_ID, ...(process.env.ADMIN_IDS || '').split(',').map(Number).filter(Boolean)];
 const PORT = process.env.PORT || 8080;
@@ -362,6 +365,7 @@ bot.callbackQuery(/^menu_buy$/, async (ctx) => {
   const kb = new InlineKeyboard();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
+  kb.text('\ud83d\udcb3 Amypay (' + AMYPAY_PRICE + ' RUB)', 'pay_amypay');
   kb.row().text(t.menu_btn_usdt_guide, 'menu_usdt_guide').text(t.promo_btn, 'promo_enter');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
@@ -385,6 +389,7 @@ bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
   const kb = new InlineKeyboard();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
+  kb.text('\ud83d\udcb3 Amypay (' + AMYPAY_PRICE + ' RUB)', 'pay_amypay');
   kb.row().text(t.menu_btn_usdt_guide, 'menu_usdt_guide').text(t.promo_btn, 'promo_enter');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
@@ -652,6 +657,52 @@ bot.callbackQuery(/^pay_card_transfer_lifetime$/, async (ctx) => {
     }
   ).catch(() => {});
   await ctx.answerCallbackQuery();
+});
+
+bot.callbackQuery(/^pay_amypay$/, async (ctx) => {
+  const t = L[getLang(ctx)];
+  await ctx.answerCallbackQuery();
+  if (!AMYPAY_KEY) {
+    await ctx.editMessageText('\u274c Amypay not configured', { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(t.back, 'menu_buy') }).catch(() => {});
+    return;
+  }
+  const msg = await ctx.reply('\u23f3 <b>' + (getLang(ctx) === 'ru' ? '\u0421\u043e\u0437\u0434\u0430\u0451\u043c \u0441\u0447\u0451\u0442...' : 'Creating invoice...') + '</b>', { parse_mode: 'HTML' });
+  try {
+    const res = await fetch('https://amypay.ru/api/v2/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AMYPAY_KEY },
+      body: JSON.stringify({
+        amount: AMYPAY_PRICE,
+        description: 'EncodeX Premium \u2014 Lifetime',
+        external_order_id: 'encodex_' + ctx.from.id + '_' + Date.now(),
+        metadata: { userId: ctx.from.id }
+      })
+    });
+    const data = await res.json();
+    if (!data.ok || !data.order) {
+      await ctx.api.editMessageText(msg.chat.id, msg.message_id,
+        '\u274c ' + (getLang(ctx) === 'ru' ? '\u041e\u0448\u0438\u0431\u043a\u0430 Amypay' : 'Amypay error') + ':\n<code>' + esc(JSON.stringify(data)) + '</code>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
+      return;
+    }
+    await ctx.api.editMessageText(msg.chat.id, msg.message_id,
+      '\ud83d\udcb3 <b>' + (getLang(ctx) === 'ru' ? '\u041e\u043f\u043b\u0430\u0442\u0438\u0442\u0435' : 'Pay') + ' ' + AMYPAY_PRICE + ' RUB</b>\n\n' +
+      (getLang(ctx) === 'ru' ? '\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043a\u043d\u043e\u043f\u043a\u0443 \u043d\u0438\u0436\u0435 \u0434\u043b\u044f \u043e\u043f\u043b\u0430\u0442\u044b \u043a\u0430\u0440\u0442\u043e\u0439 \u0438\u043b\u0438 \u0421\u0411\u041f.' : 'Tap the button below to pay via card or SBP.'),
+      {
+        parse_mode: 'HTML',
+        reply_markup: new InlineKeyboard()
+          .url('\ud83d\udcb3 ' + (getLang(ctx) === 'ru' ? '\u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c ' + AMYPAY_PRICE + ' RUB' : 'Pay ' + AMYPAY_PRICE + ' RUB'), data.order.pay_url)
+          .row()
+          .text(t.back, 'menu_buy')
+      }
+    ).catch(() => {});
+  } catch (e) {
+    await ctx.api.editMessageText(msg.chat.id, msg.message_id,
+      '\u274c <b>' + (getLang(ctx) === 'ru' ? '\u041e\u0448\u0438\u0431\u043a\u0430' : 'Error') + '</b>\n<code>' + esc(e.message) + '</code>',
+      { parse_mode: 'HTML' }
+    ).catch(() => {});
+  }
 });
 
 bot.callbackQuery(/^card_transfer_done$/, async (ctx) => {
@@ -1118,6 +1169,7 @@ bot.command('history', async (ctx) => {
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.post('/cryptobot-webhook', async (req, res) => {
   try {
@@ -1137,6 +1189,36 @@ app.post('/cryptobot-webhook', async (req, res) => {
         );
       } catch {}
     }
+  } catch {}
+  res.sendStatus(200);
+});
+
+app.post('/amypay-webhook', async (req, res) => {
+  try {
+    const body = req.body;
+    if (body.status !== 'paid') { res.sendStatus(200); return; }
+    const expected = require('crypto').createHash('sha256').update(
+      AMYPAY_KEY + ':' + body.order_number + ':' + body.amount + ':' + AMYPAY_SECRET_2
+    ).digest('hex');
+    if (!require('crypto').timingSafeEqual(Buffer.from(expected), Buffer.from(body.sign || ''))) {
+      res.status(400).send('bad sign');
+      return;
+    }
+    let userId = null;
+    try {
+      const meta = typeof body.metadata === 'string' ? JSON.parse(body.metadata) : body.metadata;
+      userId = meta?.userId;
+    } catch {}
+    if (!userId) { res.sendStatus(200); return; }
+    const key = issueKey(userId, 'amypay', 'card');
+    const t = L[userLang.get(Number(userId)) || 'en'];
+    addHistory({ key, userId, name: 'amypay', method: 'card', promo: null });
+    try {
+      await bot.api.sendMessage(userId,
+        t.success + '\n\n' + t.success_info.replace('{key}', key),
+        { parse_mode: 'HTML' }
+      );
+    } catch {}
   } catch {}
   res.sendStatus(200);
 });
