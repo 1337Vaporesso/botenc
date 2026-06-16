@@ -110,7 +110,7 @@ const L = {
     admin_btn_genkeys: '\ud83d\udd11 Gen 10',
     admin_btn_crypto: '\ud83d\udc8e Test Crypto',
     plan_title: '\ud83d\udc51 <b>Lifetime Access</b>',
-    plan_price: '\ud83d\udcb0 <b>5 USDT</b>',
+    plan_price: '\ud83d\udcb0 <b>4 USDT</b>',
     plan_desc: '<i>One-time payment \u2022 Unlimited usage \u2022 No expiry</i>',
     choose_payment: '<i>Choose payment:</i>',
     crypto: '\ud83d\udc8e CryptoBot (USDT)',
@@ -118,7 +118,7 @@ const L = {
     creating: '\u23f3 <b>Creating invoice...</b>',
     crypto_pay_title: '\ud83d\udc8e CryptoBot (USDT)',
     crypto_pay_info: '<i>Tap the button to pay with CryptoBot</i>',
-    pay_usdt: '\ud83d\udcb3 Pay 5 USDT',
+    pay_usdt: '\ud83d\udcb3 Pay 4 USDT',
     card_transfer: '\ud83c\udfe6 Card Transfer (Manual)',
     card_transfer_title: '\ud83c\udfe6 Card Transfer',
     card_transfer_info: 'Send <b>150 UAH</b> to the card below, then tap "I paid":\n\n<code>{details}</code>',
@@ -212,7 +212,7 @@ const L = {
     admin_btn_genkeys: '\ud83d\udd11 \u0421\u0433\u0435\u043d 10',
     admin_btn_crypto: '\ud83d\udc8e \u0422\u0435\u0441\u0442 Crypto',
     plan_title: '\ud83d\udc51 <b>\u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430</b>',
-    plan_price: '\ud83d\udcb0 <b>5 USDT</b>',
+    plan_price: '\ud83d\udcb0 <b>4 USDT</b>',
     plan_desc: '<i>\u041e\u0434\u0438\u043d \u043f\u043b\u0430\u0442\u0435\u0436 \u2022 \u0411\u0435\u0437 \u043b\u0438\u043c\u0438\u0442\u043e\u0432 \u2022 \u041d\u0430\u0432\u0441\u0435\u0433\u0434\u0430</i>',
     choose_payment: '<i>\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u043f\u043b\u0430\u0442\u0443:</i>',
     crypto: '\ud83d\udc8e CryptoBot (USDT)',
@@ -220,7 +220,7 @@ const L = {
     creating: '\u23f3 <b>\u0421\u043e\u0437\u0434\u0430\u0451\u043c \u0438\u043d\u0432\u043e\u0439\u0441...</b>',
     crypto_pay_title: '\ud83d\udc8e CryptoBot (USDT)',
     crypto_pay_info: '<i>\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043a\u043d\u043e\u043f\u043a\u0443 \u0434\u043b\u044f \u043e\u043f\u043b\u0430\u0442\u044b</i>',
-    pay_usdt: '\ud83d\udcb3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c 5 USDT',
+    pay_usdt: '\ud83d\udcb3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c 4 USDT',
     card_transfer: '\ud83c\udfe6 \u041f\u0435\u0440\u0435\u0432\u043e\u0434 \u043d\u0430 \u043a\u0430\u0440\u0442\u0443',
     card_transfer_title: '\ud83c\udfe6 \u041f\u0435\u0440\u0435\u0432\u043e\u0434 \u043d\u0430 \u043a\u0430\u0440\u0442\u0443',
     card_transfer_info: '\u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 <b>150 UAH</b> \u043d\u0430 \u043a\u0430\u0440\u0442\u0443 \u043d\u0438\u0436\u0435, \u0437\u0430\u0442\u0435\u043c \u043d\u0430\u0436\u043c\u0438\u0442\u0435 "\u041e\u043f\u043b\u0430\u0442\u0438\u043b":\n\n<code>{details}</code>',
@@ -577,11 +577,11 @@ bot.callbackQuery(/^pay_crypto_lifetime$/, async (ctx) => {
 
   const promoCode = userPromo.get(ctx.from.id);
   let promo = null;
-  let amount = 5;
+  let amount = 4;
   if (promoCode && promoCodes.has(promoCode)) {
     promo = promoCodes.get(promoCode);
     if (promo.uses >= promo.maxUses) { userPromo.delete(ctx.from.id); promo = null; }
-    else amount = promo.discount === 100 ? 0.1 : +(5 * (100 - promo.discount) / 100).toFixed(2);
+    else amount = promo.discount === 100 ? 0.1 : +(4 * (100 - promo.discount) / 100).toFixed(2);
   }
 
   const msg = await ctx.reply(t.creating, { parse_mode: 'HTML' });
