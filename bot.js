@@ -94,6 +94,7 @@ const L = {
     menu_btn_main: '\ud83c\udfe0 Main',
     menu_btn_buy: '\ud83d\udc8e Buy Premium',
     menu_btn_licenses: '\ud83d\udccb My Licenses',
+    menu_btn_usdt_guide: '\ud83d\udcb1 How to buy USDT',
     menu_btn_instructions: '\ud83d\udcd6 Instructions',
     menu_btn_faq: '\u2753 FAQ',
     menu_btn_support: '\ud83d\udd27 Support',
@@ -183,7 +184,9 @@ const L = {
     support_title: '\ud83d\udd27 <b>Support</b>',
     support_text: 'Having issues? Contact us:\n\n\ud83d\udcac @plopaja\n\u2709\ufe0f <a href="https://t.me/plopaja">Open Chat</a>\n\nWe reply within 24 hours.',
     community_title: '\ud83c\udf0d <b>Community</b>',
-    community_text: 'Join our community!\n\n\ud83d\udc65 <a href="https://t.me/encodexchat">Chat</a>\n\ud83d\udce2 <a href="https://t.me/encodexhd">News Channel</a>'
+    community_text: 'Join our community!\n\n\ud83d\udc65 <a href="https://t.me/encodexchat">Chat</a>\n\ud83d\udce2 <a href="https://t.me/encodexhd">News Channel</a>',
+    usdt_guide_title: '\ud83d\udcb1 <b>How to buy USDT</b>',
+    usdt_guide_text: '<b>Option 1 \u2014 P2P (Best for beginners)</b>\n\n1\ufe0f\u20e3 Go to <a href="https://p2p.binance.com">Binance P2P</a>\n2\ufe0f\u20e3 Choose RUB \u2192 USDT\n3\ufe0f\u20e3 Find a seller with good rating\n4\ufe0f\u20e3 Pay via SBP / card / bank transfer\n5\ufe0f\u20e3 Receive USDT to your wallet\n\n<b>Option 2 \u2014 BestChange (No registration)</b>\n\n1\ufe0f\u20e3 Go to <a href="https://bestchange.ru">BestChange</a>\n2\ufe0f\u20e3 Find \u00abRUB \u2192 USDT (TRC20)\u00bb\n3\ufe0f\u20e3 Pick an exchanger with good rate\n4\ufe0f\u20e3 Send RUB, get USDT\n\n<b>Option 3 \u2014 From an exchange</b>\n\nBuy USDT directly on <a href="https://bybit.com">Bybit</a>, <a href="https://okx.com">OKX</a>, or <a href="https://huobi.com">HTX</a> with your card.\n\n\ud83d\udcb3 <b>Then come back and pay via CryptoBot!</b>'
   },
   ru: {
     lang_pick: '\ud83c\udf10 <b>\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u044f\u0437\u044b\u043a</b>\n\n\ud83c\uddfa\ud83c\uddf8 Choose your language',
@@ -193,6 +196,7 @@ const L = {
     menu_btn_main: '\ud83c\udfe0 \u0413\u043b\u0430\u0432\u043d\u0430\u044f',
     menu_btn_buy: '\ud83d\udc8e \u041a\u0443\u043f\u0438\u0442\u044c Premium',
     menu_btn_licenses: '\ud83d\udccb \u041c\u043e\u0438 \u043b\u0438\u0446\u0435\u043d\u0437\u0438\u0438',
+    menu_btn_usdt_guide: '\ud83d\udcb1 \u041a\u0430\u043a \u043a\u0443\u043f\u0438\u0442\u044c USDT',
     menu_btn_instructions: '\ud83d\udcd6 \u0418\u043d\u0441\u0442\u0440\u0443\u043a\u0446\u0438\u0438',
     menu_btn_faq: '\u2753 \u0427\u0410\u0412\u041e',
     menu_btn_support: '\ud83d\udd27 \u041f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0430',
@@ -282,7 +286,9 @@ const L = {
     support_title: '\ud83d\udd27 <b>\u041f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0430</b>',
     support_text: '\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u044b? \u0421\u0432\u044f\u0436\u0438\u0442\u0435\u0441\u044c \u0441 \u043d\u0430\u043c\u0438:\n\n\ud83d\udcac @plopaja\n\u2709\ufe0f <a href="https://t.me/plopaja">\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0447\u0430\u0442</a>\n\n\u041e\u0442\u0432\u0435\u0447\u0430\u0435\u043c \u0432 \u0442\u0435\u0447\u0435\u043d\u0438\u0438 24 \u0447\u0430\u0441\u043e\u0432.',
     community_title: '\ud83c\udf0d <b>\u0421\u043e\u043e\u0431\u0449\u0435\u0441\u0442\u0432\u043e</b>',
-    community_text: '\u041f\u0440\u0438\u0441\u043e\u0435\u0434\u0438\u043d\u044f\u0439\u0442\u0435\u0441\u044c!\n\n\ud83d\udc65 <a href="https://t.me/encodexchat">\u0427\u0430\u0442</a>\n\ud83d\udce2 <a href="https://t.me/encodexhd">\u041a\u0430\u043d\u0430\u043b \u043d\u043e\u0432\u043e\u0441\u0442\u0435\u0439</a>'
+    community_text: '\u041f\u0440\u0438\u0441\u043e\u0435\u0434\u0438\u043d\u044f\u0439\u0442\u0435\u0441\u044c!\n\n\ud83d\udc65 <a href="https://t.me/encodexchat">\u0427\u0430\u0442</a>\n\ud83d\udce2 <a href="https://t.me/encodexhd">\u041a\u0430\u043d\u0430\u043b \u043d\u043e\u0432\u043e\u0441\u0442\u0435\u0439</a>',
+    usdt_guide_title: '\ud83d\udcb1 <b>\u041a\u0430\u043a \u043a\u0443\u043f\u0438\u0442\u044c USDT</b>',
+    usdt_guide_text: '<b>\u0412\u0430\u0440\u0438\u0430\u043d\u0442 1 \u2014 P2P (\u043b\u0443\u0447\u0448\u0438\u0439 \u0434\u043b\u044f \u043d\u043e\u0432\u0438\u0447\u043a\u043e\u0432)</b>\n\n1\ufe0f\u20e3 \u0417\u0430\u0439\u0434\u0438\u0442\u0435 \u043d\u0430 <a href="https://p2p.binance.com">Binance P2P</a>\n2\ufe0f\u20e3 \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 RUB \u2192 USDT\n3\ufe0f\u20e3 \u041d\u0430\u0439\u0434\u0438\u0442\u0435 \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430 \u0441 \u0445\u043e\u0440\u043e\u0448\u0438\u043c \u0440\u0435\u0439\u0442\u0438\u043d\u0433\u043e\u043c\n4\ufe0f\u20e3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u0421\u0411\u041f / \u043a\u0430\u0440\u0442\u0443 / \u043f\u0435\u0440\u0435\u0432\u043e\u0434\n5\ufe0f\u20e3 \u041f\u043e\u043b\u0443\u0447\u0438\u0442\u0435 USDT \u043d\u0430 \u043a\u043e\u0448\u0435\u043b\u0451\u043a\n\n<b>\u0412\u0430\u0440\u0438\u0430\u043d\u0442 2 \u2014 BestChange (\u0431\u0435\u0437 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438)</b>\n\n1\ufe0f\u20e3 \u0417\u0430\u0439\u0434\u0438\u0442\u0435 \u043d\u0430 <a href="https://bestchange.ru">BestChange</a>\n2\ufe0f\u20e3 \u041d\u0430\u0439\u0434\u0438\u0442\u0435 \u00abRUB \u2192 USDT (TRC20)\u00bb\n3\ufe0f\u20e3 \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u0431\u043c\u0435\u043d\u043d\u0438\u043a \u0441 \u0445\u043e\u0440\u043e\u0448\u0438\u043c \u043a\u0443\u0440\u0441\u043e\u043c\n4\ufe0f\u20e3 \u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 RUB, \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u0435 USDT\n\n<b>\u0412\u0430\u0440\u0438\u0430\u043d\u0442 3 \u2014 \u0427\u0435\u0440\u0435\u0437 \u0431\u0438\u0440\u0436\u0443</b>\n\n\u041a\u0443\u043f\u0438\u0442\u0435 USDT \u043d\u0430\u043f\u0440\u044f\u043c\u0443\u044e \u043d\u0430 <a href="https://bybit.com">Bybit</a>, <a href="https://okx.com">OKX</a> \u0438\u043b\u0438 <a href="https://huobi.com">HTX</a> \u0441\u0432\u043e\u0435\u0439 \u043a\u0430\u0440\u0442\u043e\u0439.\n\n\ud83d\udcb3 <b>\u041f\u043e\u0442\u043e\u043c \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0439\u0442\u0435\u0441\u044c \u0438 \u043f\u043b\u0430\u0442\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 CryptoBot!</b>'
   }
 };
 
@@ -356,7 +362,7 @@ bot.callbackQuery(/^menu_buy$/, async (ctx) => {
   const kb = new InlineKeyboard();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
-  kb.row().text(t.promo_btn, 'promo_enter');
+  kb.row().text(t.menu_btn_usdt_guide, 'menu_usdt_guide').text(t.promo_btn, 'promo_enter');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
     t.plan_title + '\n\n' + t.plan_price + '\n' + t.plan_desc + '\n\n' + t.choose_payment,
@@ -364,12 +370,22 @@ bot.callbackQuery(/^menu_buy$/, async (ctx) => {
   ).catch(() => {});
 });
 
+bot.callbackQuery(/^menu_usdt_guide$/, async (ctx) => {
+  const t = L[getLang(ctx)];
+  await ctx.editMessageText(t.usdt_guide_title + '\n\n' + t.usdt_guide_text, {
+    parse_mode: 'HTML',
+    disable_web_page_preview: true,
+    reply_markup: new InlineKeyboard().text(t.back, 'menu_buy')
+  }).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
 bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
   const t = L[getLang(ctx)];
   const kb = new InlineKeyboard();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
-  kb.row().text(t.promo_btn, 'promo_enter');
+  kb.row().text(t.menu_btn_usdt_guide, 'menu_usdt_guide').text(t.promo_btn, 'promo_enter');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
     t.plan_title + '\n\n' + t.plan_price + '\n' + t.plan_desc + '\n\n' + t.choose_payment,
