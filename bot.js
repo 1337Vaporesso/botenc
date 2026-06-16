@@ -100,6 +100,7 @@ const L = {
     menu_btn_support: '\ud83d\udd27 Support',
     menu_btn_profile: '\ud83d\udc64 Profile',
     menu_btn_community: '\ud83c\udf0d Community',
+    menu_btn_about: '\u2139\ufe0f About Product',
     menu_btn_admin: '\ud83d\udd35 Admin Panel',
     admin_menu_title: '\ud83d\udd35 <b>Admin Panel</b>\n\nUse the buttons below or type commands:',
     admin_btn_panel: '\ud83d\udcca Dashboard',
@@ -186,7 +187,9 @@ const L = {
     community_title: '\ud83c\udf0d <b>Community</b>',
     community_text: 'Join our community!\n\n\ud83d\udc65 <a href="https://t.me/encodexchat">Chat</a>\n\ud83d\udce2 <a href="https://t.me/encodexhd">News Channel</a>',
     usdt_guide_title: '\ud83d\udcb1 <b>How to buy USDT</b>',
-    usdt_guide_text: '\ud83d\udcb0 <b>How to buy USDT inside CryptoBot via P2P:</b>\n\n1\ufe0f\u20e3 Open <b>@CryptoBot</b> / @send\n2\ufe0f\u20e3 Tap \u201cBuy\u201d or \u201cP2P\u201d\n3\ufe0f\u20e3 Choose <b>RUB \u2192 USDT</b>\n4\ufe0f\u20e3 Pick a seller with good rating\n5\ufe0f\u20e3 Pay via card / SBP / bank transfer\n6\ufe0f\u20e3 USDT arrives in your CryptoBot balance\n\n\ud83d\udcb3 <b>Then come back here and pay via CryptoBot!</b>'
+    usdt_guide_text: '\ud83d\udcb0 <b>How to buy USDT inside CryptoBot via P2P:</b>\n\n1\ufe0f\u20e3 Open <b>@CryptoBot</b> / @send\n2\ufe0f\u20e3 Tap \u201cBuy\u201d or \u201cP2P\u201d\n3\ufe0f\u20e3 Choose <b>RUB \u2192 USDT</b>\n4\ufe0f\u20e3 Pick a seller with good rating\n5\ufe0f\u20e3 Pay via card / SBP / bank transfer\n6\ufe0f\u20e3 USDT arrives in your CryptoBot balance\n\n\ud83d\udcb3 <b>Then come back here and pay via CryptoBot!</b>',
+    about_title: '\u2139\ufe0f <b>About Product</b>',
+    about_text: '<b>EncodeX</b> \u2014 premium patcher for TikTok video processing.\n\n\u2705 Bypass TikTok compression\n\u2705 Custom watermark <code>@encodexhd</code>\n\u2705 Unlimited videos\n\u2705 Lifetime access\n\n\ud83d\udee1\ufe0f <a href="https://telegra.ph/Politika-konfidencialnosti-04-01-26"><b>Privacy Policy</b></a>\n\ud83d\udcdd <a href="https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19"><b>Terms of Service</b></a>'
   },
   ru: {
     lang_pick: '\ud83c\udf10 <b>\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u044f\u0437\u044b\u043a</b>\n\n\ud83c\uddfa\ud83c\uddf8 Choose your language',
@@ -202,6 +205,7 @@ const L = {
     menu_btn_support: '\ud83d\udd27 \u041f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0430',
     menu_btn_profile: '\ud83d\udc64 \u041f\u0440\u043e\u0444\u0438\u043b\u044c',
     menu_btn_community: '\ud83c\udf0d \u0421\u043e\u043e\u0431\u0449\u0435\u0441\u0442\u0432\u043e',
+    menu_btn_about: '\u2139\ufe0f \u041e \u043f\u0440\u043e\u0434\u0443\u043a\u0442\u0435',
     menu_btn_admin: '\ud83d\udd35 \u0410\u0434\u043c\u0438\u043d \u043f\u0430\u043d\u0435\u043b\u044c',
     admin_menu_title: '\ud83d\udd35 <b>\u0410\u0434\u043c\u0438\u043d \u043f\u0430\u043d\u0435\u043b\u044c</b>\n\n\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u043a\u043d\u043e\u043f\u043a\u0438 \u043d\u0438\u0436\u0435 \u0438\u043b\u0438 \u0432\u0432\u043e\u0434\u0438\u0442\u0435 \u043a\u043e\u043c\u0430\u043d\u0434\u044b:',
     admin_btn_panel: '\ud83d\udcca \u0414\u0430\u0448\u0431\u043e\u0440\u0434',
@@ -288,7 +292,9 @@ const L = {
     community_title: '\ud83c\udf0d <b>\u0421\u043e\u043e\u0431\u0449\u0435\u0441\u0442\u0432\u043e</b>',
     community_text: '\u041f\u0440\u0438\u0441\u043e\u0435\u0434\u0438\u043d\u044f\u0439\u0442\u0435\u0441\u044c!\n\n\ud83d\udc65 <a href="https://t.me/encodexchat">\u0427\u0430\u0442</a>\n\ud83d\udce2 <a href="https://t.me/encodexhd">\u041a\u0430\u043d\u0430\u043b \u043d\u043e\u0432\u043e\u0441\u0442\u0435\u0439</a>',
     usdt_guide_title: '\ud83d\udcb1 <b>\u041a\u0430\u043a \u043a\u0443\u043f\u0438\u0442\u044c USDT</b>',
-    usdt_guide_text: '\ud83d\udcb0 <b>\u041a\u0430\u043a \u043a\u0443\u043f\u0438\u0442\u044c USDT \u0432 CryptoBot \u0447\u0435\u0440\u0435\u0437 P2P:</b>\n\n1\ufe0f\u20e3 \u041e\u0442\u043a\u0440\u043e\u0439\u0442\u0435 <b>@CryptoBot</b> / @send\n2\ufe0f\u20e3 \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u041a\u0443\u043f\u0438\u0442\u044c\u00bb \u0438\u043b\u0438 \u00abP2P\u00bb\n3\ufe0f\u20e3 \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 <b>RUB \u2192 USDT</b>\n4\ufe0f\u20e3 \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430 \u0441 \u0445\u043e\u0440\u043e\u0448\u0438\u043c \u0440\u0435\u0439\u0442\u0438\u043d\u0433\u043e\u043c\n5\ufe0f\u20e3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u043a\u0430\u0440\u0442\u0443 / \u0421\u0411\u041f / \u043f\u0435\u0440\u0435\u0432\u043e\u0434\n6\ufe0f\u20e3 USDT \u043f\u0440\u0438\u0434\u0451\u0442 \u043d\u0430 \u0431\u0430\u043b\u0430\u043d\u0441 \u0432 CryptoBot\n\n\ud83d\udcb3 <b>\u041f\u043e\u0442\u043e\u043c \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0439\u0442\u0435\u0441\u044c \u0441\u044e\u0434\u0430 \u0438 \u043f\u043b\u0430\u0442\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 CryptoBot!</b>'
+    usdt_guide_text: '\ud83d\udcb0 <b>\u041a\u0430\u043a \u043a\u0443\u043f\u0438\u0442\u044c USDT \u0432 CryptoBot \u0447\u0435\u0440\u0435\u0437 P2P:</b>\n\n1\ufe0f\u20e3 \u041e\u0442\u043a\u0440\u043e\u0439\u0442\u0435 <b>@CryptoBot</b> / @send\n2\ufe0f\u20e3 \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u041a\u0443\u043f\u0438\u0442\u044c\u00bb \u0438\u043b\u0438 \u00abP2P\u00bb\n3\ufe0f\u20e3 \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 <b>RUB \u2192 USDT</b>\n4\ufe0f\u20e3 \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430 \u0441 \u0445\u043e\u0440\u043e\u0448\u0438\u043c \u0440\u0435\u0439\u0442\u0438\u043d\u0433\u043e\u043c\n5\ufe0f\u20e3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u043a\u0430\u0440\u0442\u0443 / \u0421\u0411\u041f / \u043f\u0435\u0440\u0435\u0432\u043e\u0434\n6\ufe0f\u20e3 USDT \u043f\u0440\u0438\u0434\u0451\u0442 \u043d\u0430 \u0431\u0430\u043b\u0430\u043d\u0441 \u0432 CryptoBot\n\n\ud83d\udcb3 <b>\u041f\u043e\u0442\u043e\u043c \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0439\u0442\u0435\u0441\u044c \u0441\u044e\u0434\u0430 \u0438 \u043f\u043b\u0430\u0442\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 CryptoBot!</b>',
+    about_title: '\u2139\ufe0f <b>\u041e \u043f\u0440\u043e\u0434\u0443\u043a\u0442\u0435</b>',
+    about_text: '<b>EncodeX</b> \u2014 \u043f\u0440\u0435\u043c\u0438\u0443\u043c \u043f\u0430\u0442\u0447\u0435\u0440 \u0434\u043b\u044f \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0438 \u0432\u0438\u0434\u0435\u043e TikTok.\n\n\u2705 \u041e\u0431\u0445\u043e\u0434 \u0441\u0436\u0430\u0442\u0438\u044f TikTok\n\u2705 \u041a\u0430\u0441\u0442\u043e\u043c\u043d\u044b\u0439 \u0432\u0430\u0442\u0435\u0440\u043c\u0430\u0440\u043a <code>@encodexhd</code>\n\u2705 \u0411\u0435\u0437\u043b\u0438\u043c\u0438\u0442\u043d\u043e \u0432\u0438\u0434\u0435\u043e\n\u2705 \u0414\u043e\u0441\u0442\u0443\u043f \u043d\u0430\u0432\u0441\u0435\u0433\u0434\u0430\n\n\ud83d\udee1\ufe0f <a href="https://telegra.ph/Politika-konfidencialnosti-04-01-26"><b>\u041f\u043e\u043b\u0438\u0442\u0438\u043a\u0430 \u043a\u043e\u043d\u0444\u0438\u0434\u0435\u043d\u0446\u0438\u0430\u043b\u044c\u043d\u043e\u0441\u0442\u0438</b></a>\n\ud83d\udcdd <a href="https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19"><b>\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c\u0441\u043a\u043e\u0435 \u0441\u043e\u0433\u043b\u0430\u0448\u0435\u043d\u0438\u0435</b></a>'
   }
 };
 
@@ -297,7 +303,7 @@ function buildMenu(t, userId) {
     .text(t.menu_btn_buy, 'menu_buy').text(t.menu_btn_licenses, 'menu_licenses').row()
     .text(t.menu_btn_instructions, 'menu_instructions').text(t.menu_btn_faq, 'menu_faq').row()
     .text(t.menu_btn_support, 'menu_support').text(t.menu_btn_profile, 'menu_profile').row()
-    .text(t.menu_btn_community, 'menu_community');
+    .text(t.menu_btn_community, 'menu_community').text(t.menu_btn_about, 'menu_about');
   if (userId && ADMIN_IDS.includes(Number(userId))) {
     kb.row().text(t.menu_btn_admin, 'menu_admin');
   }
@@ -837,6 +843,16 @@ bot.callbackQuery(/^menu_community$/, async (ctx) => {
       .url('\ud83d\udce2 ' + (getLang(ctx) === 'ru' ? '\u041d\u043e\u0432\u043e\u0441\u0442\u0438' : 'News'), 'https://t.me/encodexhd').row()
       .text(t.back, 'menu_main'),
     disable_web_page_preview: true
+  }).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
+bot.callbackQuery(/^menu_about$/, async (ctx) => {
+  const t = L[getLang(ctx)];
+  await ctx.editMessageText(t.about_title + '\n\n' + t.about_text, {
+    parse_mode: 'HTML',
+    disable_web_page_preview: true,
+    reply_markup: new InlineKeyboard().text(t.back, 'menu_main')
   }).catch(() => {});
   await ctx.answerCallbackQuery();
 });
