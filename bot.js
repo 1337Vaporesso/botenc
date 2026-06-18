@@ -829,7 +829,7 @@ bot.callbackQuery(/^menu_profile$/, async (ctx) => {
     t.profile_id.replace('{id}', id) + '\n' +
     t.profile_name.replace('{name}', esc(ctx.from.first_name || 'User')) + '\n' +
     (getLang(ctx) === 'ru' ? '\ud83c\udf10 \u042f\u0437\u044b\u043a: <b>\u0420\u0443\u0441\u0441\u043a\u0438\u0439</b>' : t.profile_lang) + '\n' +
-    (premium ? t.profile_status_premium : t.profile_status) + '\n\n' +
+    (premium ? t.profile_status_premium : ADMIN_IDS.includes(id) ? '\ud83d\udd34 <b>ADMIN</b>' : t.profile_status) + '\n\n' +
     (premium ? '' : t.profile_no_keys);
   await ctx.editMessageText(txt, {
     parse_mode: 'HTML',
