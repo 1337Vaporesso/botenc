@@ -72,6 +72,7 @@ const promoEntry = new Set();
 const creatingPromo = new Map();
 const editingPromo = new Map();
 const deletingPromo = new Map();
+const resetWithdrawFlow = new Map();
 const importingKeys = new Set();
 
 function addHistory(entry) {
@@ -721,10 +722,25 @@ bot.on('message:text', async (ctx) => {
       await ctx.reply(t.promo_delete_fail.replace('{code}', code), { parse_mode: 'HTML' });
       return;
     }
-  promoCodes.delete(code);
-  await dbDeletePromo(code);
+    promoCodes.delete(code);
     await dbDeletePromo(code);
     await ctx.reply(t.promo_deleted.replace('{code}', code), { parse_mode: 'HTML' });
+    return;
+  }
+
+  // Flow: Reset Withdraw
+  if (resetWithdrawFlow.has(userId)) {
+    resetWithdrawFlow.delete(userId);
+    const t = L[getLang(ctx)];
+    const code = text.toUpperCase();
+    if (!code || !promoCodes.has(code)) {
+      await ctx.reply(t.resetwithdraw_usage, { parse_mode: 'HTML' });
+      return;
+    }
+    const p = promoCodes.get(code);
+    p.withdrawn = p.totalEarned || 0;
+    await dbSavePromo(code, p);
+    await ctx.reply(t.resetwithdraw_done.replace('{code}', code), { parse_mode: 'HTML' });
     return;
   }
 
@@ -1156,6 +1172,7 @@ bot.callbackQuery(/^ad_promos$/, async (ctx) => {
     reply_markup: new InlineKeyboard()
       .text('\u270f\ufe0f ' + (getLang(ctx) === 'ru' ? '\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c' : 'Edit'), 'ad_editpromo_flow')
       .text('\u274c ' + (getLang(ctx) === 'ru' ? '\u0423\u0434\u0430\u043b\u0438\u0442\u044c' : 'Delete'), 'ad_delpromo_flow').row()
+      .text('\ud83d\udfe3 ' + (getLang(ctx) === 'ru' ? '\u0421\u0431\u0440\u043e\u0441\u0438\u0442\u044c \u0432\u044b\u0432\u043e\u0434' : 'Reset Withdraw'), 'ad_resetwithdraw_flow').row()
       .text(t.back, 'menu_admin')
   }).catch(() => {});
   await ctx.answerCallbackQuery();
@@ -1221,6 +1238,17 @@ bot.callbackQuery(/^ad_delpromo_flow$/, async (ctx) => {
   await ctx.editMessageText(
     '\u274c ' + (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u0430 \u0434\u043b\u044f \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f:' : 'Enter promo code name to delete:'),
     { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(L[getLang(ctx)].back, 'menu_admin') }
+  ).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
+// Reset Withdraw flow
+bot.callbackQuery(/^ad_resetwithdraw_flow$/, async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  resetWithdrawFlow.set(ctx.from.id, true);
+  await ctx.editMessageText(
+    '\ud83d\udfe3 ' + (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u0430 \u0434\u043b\u044f \u0441\u0431\u0440\u043e\u0441\u0430 \u0431\u0430\u043b\u0430\u043d\u0441\u0430:' : 'Enter promo code name to reset withdraw:'),
+    { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(L[getLang(ctx)].back, 'ad_promos') }
   ).catch(() => {});
   await ctx.answerCallbackQuery();
 });
