@@ -95,7 +95,7 @@ const awaitingReceipt = new Set();
 
 async function dbSavePromo(code, p) {
   if (!dbPool) return;
-  try { await dbPool.query('INSERT INTO bot_promos (code, discount, max_uses, uses, created_by, created_at) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (code) DO UPDATE SET discount=$2,max_uses=$3,uses=$4', [code, p.discount, p.maxUses, p.uses, p.createdBy || null, p.createdAt || null]); } catch {}
+  try { await dbPool.query('INSERT INTO bot_promos (code, discount, max_uses, uses, created_by, created_at, owner_id, affiliate_percent, total_earned, withdrawn) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (code) DO UPDATE SET discount=$2,max_uses=$3,uses=$4,owner_id=$7,affiliate_percent=$8,total_earned=$9,withdrawn=$10', [code, p.discount, p.maxUses, p.uses, p.createdBy || null, p.createdAt || null, p.ownerId || null, p.affiliatePercent || 15, p.totalEarned || 0, p.withdrawn || 0]); } catch {}
 }
 
 async function dbDeletePromo(code) {
@@ -117,7 +117,12 @@ async function loadFromDb() {
   if (!dbPool) return;
   try {
     await dbPool.query(`CREATE TABLE IF NOT EXISTS bot_keys (key_id TEXT PRIMARY KEY, user_id TEXT, name TEXT, method TEXT, time BIGINT NOT NULL)`);
-    await dbPool.query(`CREATE TABLE IF NOT EXISTS bot_promos (code TEXT PRIMARY KEY, discount INT NOT NULL, max_uses INT NOT NULL, uses INT NOT NULL DEFAULT 0, created_by BIGINT, created_at BIGINT)`);
+    await dbPool.query(`CREATE TABLE IF NOT EXISTS bot_promos (code TEXT PRIMARY KEY, discount INT NOT NULL, max_uses INT NOT NULL, uses INT NOT NULL DEFAULT 0, created_by BIGINT, created_at BIGINT, owner_id BIGINT, affiliate_percent INT DEFAULT 15, total_earned NUMERIC DEFAULT 0, withdrawn NUMERIC DEFAULT 0)`);
+
+    // Add columns if missing (for existing DB)
+    for (const col of ['owner_id BIGINT', 'affiliate_percent INT DEFAULT 15', 'total_earned NUMERIC DEFAULT 0', 'withdrawn NUMERIC DEFAULT 0']) {
+      try { await dbPool.query('ALTER TABLE bot_promos ADD COLUMN IF NOT EXISTS ' + col); } catch {}
+    }
     await dbPool.query(`CREATE TABLE IF NOT EXISTS bot_history (id SERIAL PRIMARY KEY, key_id TEXT, user_id TEXT, name TEXT, method TEXT, promo TEXT, time BIGINT NOT NULL)`);
     await dbPool.query(`CREATE TABLE IF NOT EXISTS bot_pending (id TEXT PRIMARY KEY, user_id TEXT, name TEXT, method TEXT, amount INT, promo_code TEXT, message_id BIGINT, receipt_file_id TEXT)`);
 
@@ -130,7 +135,7 @@ async function loadFromDb() {
 
     const promosRes = await dbPool.query('SELECT * FROM bot_promos');
     for (const row of promosRes.rows) {
-      promoCodes.set(row.code, { code: row.code, discount: row.discount, maxUses: row.max_uses, uses: row.uses, createdBy: row.created_by, createdAt: row.created_at });
+      promoCodes.set(row.code, { code: row.code, discount: row.discount, maxUses: row.max_uses, uses: row.uses, createdBy: row.created_by, createdAt: row.created_at, ownerId: row.owner_id, affiliatePercent: row.affiliate_percent || 15, totalEarned: Number(row.total_earned) || 0, withdrawn: Number(row.withdrawn) || 0 });
     }
 
     const histRes = await dbPool.query('SELECT * FROM bot_history ORDER BY id');
@@ -230,7 +235,18 @@ const L = {
     promo_created: '\u2705 Promo <b>{code}</b> created: {d}% off, {max} max uses.',
     promo_deleted: '\u274c Promo <b>{code}</b> deleted.',
     promo_delete_fail: '\u274c Promo <b>{code}</b> not found.',
-    createpromo_usage: 'Usage:\n/createpromo <code>NAME DISCOUNT% MAXUSES</code>',
+    createpromo_usage: 'Usage:\n/createpromo <code>NAME DISCOUNT% MAXUSES [OWNER_ID] [%]</code>\n\nOptional: OWNER_ID = affiliate Telegram ID, % = affiliate commission percent',
+    mystats_title: '\ud83d\udcca <b>My Stats</b>\n\nPromo: <b>{code}</b>',
+    mystats_duration: '\u23f1 Duration',
+    mystats_discount: '\ud83d\udcb0 Discount for buyers',
+    mystats_income: '\ud83d\udcb5 Your income',
+    mystats_purchases: '\ud83d\udecd Purchases',
+    mystats_earned: '\ud83d\udcb8 Total earned',
+    mystats_withdraw: '\ud83d\udfe3 Available for withdrawal',
+    mystats_withdraw_note: '\n\n\u2709\ufe0f For withdrawal contact @plopaja',
+    mystats_none: '\u274c You don\'t have any promo code linked to your account.',
+    resetwithdraw_usage: 'Usage:\n/resetwithdraw <code>CODE</code>',
+    resetwithdraw_done: '\u2705 Withdrawal balance for <b>{code}</b> reset to 0.',
     history_title: '\uD83D\uDCC4 <b>Purchase History</b>\n{list}',
     history_empty: 'No purchases yet.',
     history_line: '<code>{key}</code> \u2192 {name} ({method}){promo}\n',
@@ -335,7 +351,18 @@ const L = {
     promo_created: '\u2705 \u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434 <b>{code}</b> \u0441\u043e\u0437\u0434\u0430\u043d: \u0441\u043a\u0438\u0434\u043a\u0430 {d}%, {max} \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439.',
     promo_deleted: '\u274c \u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434 <b>{code}</b> \u0443\u0434\u0430\u043b\u0451\u043d.',
     promo_delete_fail: '\u274c \u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434 <b>{code}</b> \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d.',
-    createpromo_usage: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435:\n/createpromo <code>\u041d04104170416 \u0421\u043a\u0438\u0434\u043a\u0430% \u041a\u043e\u043b-\u0432\u043e</code>',
+    createpromo_usage: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435:\n/createpromo <code>\u041d04104170416 \u0421\u043a\u0438\u0434\u043a\u0430% \u041a\u043e\u043b-\u0432\u043e [ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430] [%]</code>\n\n\u041d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e: ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430 = \u0422\u0435\u043b\u0435\u0433\u0440\u0430\u043c ID \u043c\u0435\u0434\u0438\u0439\u043a\u0438, % = \u0435\u0433\u043e \u043f\u0440\u043e\u0446\u0435\u043d\u0442 \u043a\u043e\u043c\u0438\u0441\u0441\u0438\u0438',
+    mystats_title: '\ud83d\udcca <b>\u041c\u043e\u044f \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430</b>\n\n\u041f\u0440\u043e\u043c\u043e: <b>{code}</b>',
+    mystats_duration: '\u23f1 \u0414\u043b\u0438\u0442\u0435\u043b\u044c\u043d\u043e\u0441\u0442\u044c',
+    mystats_discount: '\ud83d\udcb0 \u0421\u043a\u0438\u0434\u043a\u0430 \u0434\u043b\u044f \u043f\u043e\u043a\u0443\u043f\u0430\u0442\u0435\u043b\u0435\u0439',
+    mystats_income: '\ud83d\udcb5 \u0412\u0430\u0448 \u0434\u043e\u0445\u043e\u0434',
+    mystats_purchases: '\ud83d\udecd \u041f\u043e\u043a\u0443\u043f\u043e\u043a \u043f\u043e \u043f\u0440\u043e\u043c\u043e',
+    mystats_earned: '\ud83d\udcb8 \u0412\u0441\u0435\u0433\u043e \u0437\u0430\u0440\u0430\u0431\u043e\u0442\u0430\u043d\u043e',
+    mystats_withdraw: '\ud83d\udfe3 \u041a \u0432\u044b\u0432\u043e\u0434\u0443',
+    mystats_withdraw_note: '\n\n\u2709\ufe0f \u0414\u043b\u044f \u0432\u044b\u0432\u043e\u0434\u0430 \u043f\u0438\u0448\u0438\u0442\u0435 @plopaja',
+    mystats_none: '\u274c \u0423 \u0432\u0430\u0441 \u043d\u0435\u0442 \u043f\u0440\u0438\u0432\u044f\u0437\u0430\u043d\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u0430.',
+    resetwithdraw_usage: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435:\n/resetwithdraw <code>\u041d04104170416</code>',
+    resetwithdraw_done: '\u2705 \u0411\u0430\u043b\u0430\u043d\u0441 \u0434\u043b\u044f \u0432\u044b\u0432\u043e\u0434\u0430 \u043f\u043e \u043a\u043e\u0434\u0443 <b>{code}</b> \u0441\u0431\u0440\u043e\u0448\u0435\u043d.',
     history_title: '\uD83D\uDCC4 <b>\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u043f\u043e\u043a\u0443\u043f\u043e\u043a</b>\n{list}',
     history_empty: '\u041f\u043e\u043a\u0443\u043f\u043e\u043a \u0435\u0449\u0451 \u043d\u0435\u0442.',
     history_line: '<code>{key}</code> \u2192 {name} ({method}){promo}\n',
@@ -597,6 +624,16 @@ bot.on('message:text', async (ctx) => {
         return;
       }
       state.discount = d;
+      state.step = 'owner';
+      await ctx.reply(
+        (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 Telegram ID \u043c\u0435\u0434\u0438\u0439\u043a\u0438 (\u0438\u043b\u0438 0 \u0434\u043b\u044f \u043f\u0440\u043e\u043f\u0443\u0441\u043a\u0430):' : 'Enter Telegram ID of the affiliate (or 0 to skip):'),
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
+    if (state.step === 'owner') {
+      const oid = parseInt(text);
+      state.ownerId = oid && oid > 0 ? oid : null;
       state.step = 'maxUses';
       await ctx.reply(
         (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0430\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u0439:' : 'Enter max uses:'),
@@ -607,12 +644,13 @@ bot.on('message:text', async (ctx) => {
     if (state.step === 'maxUses') {
       const maxUses = parseInt(text) || 1;
       creatingPromo.delete(userId);
-      promoCodes.set(state.name, { code: state.name, discount: state.discount, maxUses, uses: 0, createdBy: userId, createdAt: Date.now() });
+      promoCodes.set(state.name, { code: state.name, discount: state.discount, maxUses, uses: 0, createdBy: userId, createdAt: Date.now(), ownerId: state.ownerId || null, affiliatePercent: state.affiliatePercent || 15, totalEarned: 0, withdrawn: 0 });
       await dbSavePromo(state.name, promoCodes.get(state.name));
       await ctx.reply(
         '\u2705 ' + (getLang(ctx) === 'ru' ? '\u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434' : 'Promo') + ' <b>' + state.name + '</b> ' +
         (getLang(ctx) === 'ru' ? '\u0441\u043e\u0437\u0434\u0430\u043d: \u0441\u043a\u0438\u0434\u043a\u0430' : 'created:') + ' <b>' + state.discount + '%</b>, ' +
-        (getLang(ctx) === 'ru' ? 'макс. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439' : 'max uses') + ': <b>' + maxUses + '</b>',
+        (getLang(ctx) === 'ru' ? 'макс. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439' : 'max uses') + ': <b>' + maxUses + '</b>' +
+        (state.ownerId ? '\n\ud83d\udc64 ' + (getLang(ctx) === 'ru' ? 'ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430:' : 'Owner ID:') + ' <b>' + state.ownerId + '</b>\n\ud83d\udcb0 ' + (getLang(ctx) === 'ru' ? '% \u0430\u0432\u0442\u043e\u0440\u0443:' : 'Affiliate %:') + ' <b>' + (state.affiliatePercent || 15) + '%</b>' : ''),
         { parse_mode: 'HTML' }
       );
       return;
@@ -842,7 +880,12 @@ bot.callbackQuery(/^approve_payment_(\d+)$/, async (ctx) => {
   const t = L[p.lang || 'en'];
   const key = await issueKey(String(p.userId), p.name, 'card_transfer');
 
-  if (p.promoCode && promoCodes.has(p.promoCode)) { promoCodes.get(p.promoCode).uses++; await dbSavePromo(p.promoCode, promoCodes.get(p.promoCode)); }
+  if (p.promoCode && promoCodes.has(p.promoCode)) {
+    const pr = promoCodes.get(p.promoCode);
+    pr.uses++;
+    if (pr.ownerId) pr.totalEarned = (pr.totalEarned || 0) + (150 * (pr.affiliatePercent || 15) / 100);
+    await dbSavePromo(p.promoCode, pr);
+  }
   addHistory({ key, userId: String(p.userId), name: p.name, method: 'card_transfer', promo: p.promoCode || null });
 
   try {
@@ -914,11 +957,42 @@ bot.callbackQuery(/^menu_profile$/, async (ctx) => {
     (premium ? '' : t.profile_no_keys);
   await ctx.editMessageText(txt, {
     parse_mode: 'HTML',
-    reply_markup: new InlineKeyboard()
-      .text('\ud83d\udc8e ' + (getLang(ctx) === 'ru' ? '\u041a\u0443\u043f\u0438\u0442\u044c Premium' : 'Buy Premium'), 'menu_buy')
-      .text(t.profile_change_lang, 'profile_lang').row()
-      .text(t.back, 'menu_main')
+    reply_markup: (() => {
+      const kb = new InlineKeyboard();
+      kb.text('\ud83d\udc8e ' + (getLang(ctx) === 'ru' ? '\u041a\u0443\u043f\u0438\u0442\u044c Premium' : 'Buy Premium'), 'menu_buy');
+      kb.text(t.profile_change_lang, 'profile_lang').row();
+      for (const [, p] of promoCodes) { if (p.ownerId && Number(p.ownerId) === id) { kb.text('\ud83d\udcca ' + (getLang(ctx) === 'ru' ? '\u041c\u043e\u044f \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430' : 'My Stats'), 'mystats'); break; } }
+      kb.text(t.back, 'menu_main');
+      return kb;
+    })()
   }).catch(() => {});
+  await ctx.answerCallbackQuery();
+});
+
+bot.callbackQuery(/^mystats$/, async (ctx) => {
+  const t = L[getLang(ctx)];
+  const userId = ctx.from.id;
+  let found = null;
+  for (const [code, p] of promoCodes) {
+    if (p.ownerId && Number(p.ownerId) === userId) { found = { code, ...p }; break; }
+  }
+  if (!found) { await ctx.editMessageText(t.mystats_none, { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(t.back, 'menu_profile') }).catch(() => {}); await ctx.answerCallbackQuery(); return; }
+  const durationMs = Date.now() - (found.createdAt || Date.now());
+  const days = Math.floor(durationMs / 86400000);
+  const hours = Math.floor((durationMs % 86400000) / 3600000);
+  const durationStr = days + 'd ' + hours + 'h';
+  const available = Math.max(0, (found.totalEarned || 0) - (found.withdrawn || 0));
+  await ctx.editMessageText(
+    t.mystats_title.replace('{code}', found.code) + '\n\n' +
+    '\u23f1 ' + t.mystats_duration + ': <b>' + durationStr + '</b>\n' +
+    '\ud83d\udcb0 ' + t.mystats_discount + ': <b>' + found.discount + '%</b>\n' +
+    '\ud83d\udcb5 ' + t.mystats_income + ': <b>' + (found.affiliatePercent || 15) + '%</b>\n' +
+    '\ud83d\udecd ' + t.mystats_purchases + ': <b>' + found.uses + '</b>\n' +
+    '\ud83d\udcb8 ' + t.mystats_earned + ': <b>' + Number(found.totalEarned || 0).toFixed(2) + '</b>\n' +
+    '\ud83d\udfe3 ' + t.mystats_withdraw + ': <b>' + available.toFixed(2) + '</b>' +
+    t.mystats_withdraw_note,
+    { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(t.back, 'menu_profile') }
+  ).catch(() => {});
   await ctx.answerCallbackQuery();
 });
 
@@ -1237,9 +1311,11 @@ bot.command('createpromo', async (ctx) => {
   const code = parts[1].toUpperCase();
   const discount = Math.min(100, Math.max(1, parseInt(parts[2]) || 0));
   const maxUses = parseInt(parts[3]) || 1;
-  promoCodes.set(code, { code, discount, maxUses, uses: 0, createdBy: ctx.from.id, createdAt: Date.now() });
+  const ownerId = parts[4] ? parseInt(parts[4]) || null : null;
+  const affiliatePercent = parts[5] ? Math.min(100, Math.max(0, parseInt(parts[5]) || 15)) : 15;
+  promoCodes.set(code, { code, discount, maxUses, uses: 0, createdBy: ctx.from.id, createdAt: Date.now(), ownerId, affiliatePercent, totalEarned: 0, withdrawn: 0 });
   await dbSavePromo(code, promoCodes.get(code));
-  await ctx.reply(t.promo_created.replace('{code}', code).replace('{d}', discount).replace('{max}', maxUses), { parse_mode: 'HTML' });
+  await ctx.reply(t.promo_created.replace('{code}', code).replace('{d}', discount).replace('{max}', maxUses) + (ownerId ? '\n\ud83d\udc64 ' + (getLang(ctx) === 'ru' ? 'ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430:' : 'Owner ID:') + ' <b>' + ownerId + '</b>\n\ud83d\udcb0 ' + (getLang(ctx) === 'ru' ? '% \u0430\u0432\u0442\u043e\u0440\u0443:' : 'Affiliate %:') + ' <b>' + affiliatePercent + '%</b>' : ''), { parse_mode: 'HTML' });
 });
 
 bot.command('testplatega', async (ctx) => {
@@ -1286,6 +1362,43 @@ bot.command('deletepromo', async (ctx) => {
   await ctx.reply(t.promo_deleted.replace('{code}', code), { parse_mode: 'HTML' });
 });
 
+bot.command('mystats', async (ctx) => {
+  const t = L[getLang(ctx)];
+  const userId = ctx.from.id;
+  let found = null;
+  for (const [code, p] of promoCodes) {
+    if (p.ownerId && Number(p.ownerId) === userId) { found = { code, ...p }; break; }
+  }
+  if (!found) { await ctx.reply(t.mystats_none, { parse_mode: 'HTML' }); return; }
+  const durationMs = Date.now() - (found.createdAt || Date.now());
+  const days = Math.floor(durationMs / 86400000);
+  const hours = Math.floor((durationMs % 86400000) / 3600000);
+  const durationStr = days + 'd ' + hours + 'h';
+  const available = Math.max(0, (found.totalEarned || 0) - (found.withdrawn || 0));
+  await ctx.reply(
+    t.mystats_title.replace('{code}', found.code) + '\n\n' +
+    '\u23f1 ' + t.mystats_duration + ': <b>' + durationStr + '</b>\n' +
+    '\ud83d\udcb0 ' + t.mystats_discount + ': <b>' + found.discount + '%</b>\n' +
+    '\ud83d\udcb5 ' + t.mystats_income + ': <b>' + (found.affiliatePercent || 15) + '%</b>\n' +
+    '\ud83d\udecd ' + t.mystats_purchases + ': <b>' + found.uses + '</b>\n' +
+    '\ud83d\udcb8 ' + t.mystats_earned + ': <b>' + Number(found.totalEarned || 0).toFixed(2) + '</b>\n' +
+    '\ud83d\udfe3 ' + t.mystats_withdraw + ': <b>' + available.toFixed(2) + '</b>' +
+    t.mystats_withdraw_note,
+    { parse_mode: 'HTML' }
+  );
+});
+
+bot.command('resetwithdraw', async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const t = L[getLang(ctx)];
+  const code = (ctx.message?.text || '').split(/\s+/)[1]?.toUpperCase();
+  if (!code || !promoCodes.has(code)) { await ctx.reply(t.resetwithdraw_usage, { parse_mode: 'HTML' }); return; }
+  const p = promoCodes.get(code);
+  p.withdrawn = p.totalEarned || 0;
+  await dbSavePromo(code, p);
+  await ctx.reply(t.resetwithdraw_done.replace('{code}', code), { parse_mode: 'HTML' });
+});
+
 bot.command('history', async (ctx) => {
   if (!ADMIN_IDS.includes(ctx.from.id)) return;
   const t = L[getLang(ctx)];
@@ -1312,7 +1425,12 @@ app.post('/cryptobot-webhook', async (req, res) => {
       const promoCode = parts.length > 3 ? parts.slice(3).join('_') : null;
       const key = await issueKey(userId, 'crypto', 'cryptobot');
       const t = L[userLang.get(Number(userId)) || 'en'];
-      if (promoCode && promoCodes.has(promoCode)) { promoCodes.get(promoCode).uses++; await dbSavePromo(promoCode, promoCodes.get(promoCode)); }
+      if (promoCode && promoCodes.has(promoCode)) {
+        const pr = promoCodes.get(promoCode);
+        pr.uses++;
+        if (pr.ownerId) pr.totalEarned = (pr.totalEarned || 0) + (4 * (pr.affiliatePercent || 15) / 100);
+        await dbSavePromo(promoCode, pr);
+      }
       addHistory({ key, userId, name: 'crypto', method: 'cryptobot', promo: promoCode || null });
       try {
         await bot.api.sendMessage(userId,
@@ -1342,7 +1460,12 @@ app.post('/platega-webhook', async (req, res) => {
     if (!userId) { res.sendStatus(200); return; }
     const key = await issueKey(userId, 'platega', 'card');
     const t = L[userLang.get(Number(userId)) || 'en'];
-    if (promoCode && promoCodes.has(promoCode)) { promoCodes.get(promoCode).uses++; await dbSavePromo(promoCode, promoCodes.get(promoCode)); }
+    if (promoCode && promoCodes.has(promoCode)) {
+      const pr = promoCodes.get(promoCode);
+      pr.uses++;
+      if (pr.ownerId) pr.totalEarned = (pr.totalEarned || 0) + (PLATEGA_PRICE * (pr.affiliatePercent || 15) / 100);
+      await dbSavePromo(promoCode, pr);
+    }
     addHistory({ key, userId, name: 'platega', method: 'card', promo: promoCode });
     try {
       await bot.api.sendMessage(userId,
