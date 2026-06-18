@@ -674,7 +674,7 @@ bot.on('message:text', async (ctx) => {
       const p = promoCodes.get(code);
       state.step = 'discount';
       await ctx.reply(
-        (getLang(ctx) === 'ru' ? '\u0422\u0435\u043a\u0443\u0449\u0430\u044f \u0441\u043a\u0438\u0434\u043a\u0430: ' + p.discount + '%\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u0432\u0443\u044e \u0441\u043a\u0438\u0434\u043a\u0443 \u0432 % (1-100):' : 'Current discount: ' + p.discount + '%\nEnter new discount % (1-100):'),
+        (getLang(ctx) === 'ru' ? '\u27a1\ufe0f <b>' + code + '</b>\n\n\u0422\u0435\u043a\u0443\u0449\u0430\u044f \u0441\u043a\u0438\u0434\u043a\u0430: ' + p.discount + '%\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u0432\u0443\u044e \u0441\u043a\u0438\u0434\u043a\u0443 (1-100):' : '\u27a1\ufe0f <b>' + code + '</b>\n\nCurrent discount: ' + p.discount + '%\nEnter new discount (1-100):'),
         { parse_mode: 'HTML' }
       );
       return;
@@ -689,24 +689,49 @@ bot.on('message:text', async (ctx) => {
         return;
       }
       state.discount = d;
+      state.step = 'owner';
+      const p = promoCodes.get(state.code);
+      await ctx.reply(
+        (getLang(ctx) === 'ru' ? '\u0422\u0435\u043a\u0443\u0449\u0438\u0439 ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430: ' + (p.ownerId || '\u043d\u0435\u0442') + '\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u0432\u044b\u0439 Telegram ID \u043c\u0435\u0434\u0438\u0439\u043a\u0438 (0 \u0434\u043b\u044f \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f):' : 'Current owner ID: ' + (p.ownerId || 'none') + '\nEnter new Telegram ID of affiliate (0 to remove):'),
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
+    if (state.step === 'owner') {
+      const oid = parseInt(text);
+      state.ownerId = oid && oid > 0 ? oid : null;
       state.step = 'maxUses';
       const p = promoCodes.get(state.code);
       await ctx.reply(
-        (getLang(ctx) === 'ru' ? '\u0422\u0435\u043a\u0443\u0449\u0438\u0435 \u043c\u0430\u043a\u0441. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u044f: ' + p.maxUses + '\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u0432\u043e\u0435 \u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0430\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u0439:' : 'Current max uses: ' + p.maxUses + '\nEnter new max uses:'),
+        (getLang(ctx) === 'ru' ? '\u0422\u0435\u043a\u0443\u0449\u0438\u0435 \u043c\u0430\u043a\u0441. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u044f: ' + p.maxUses + '\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u0432\u043e\u0435 \u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e:' : 'Current max uses: ' + p.maxUses + '\nEnter new max uses:'),
         { parse_mode: 'HTML' }
       );
       return;
     }
     if (state.step === 'maxUses') {
       const maxUses = parseInt(text) || 1;
+      state.step = 'percent';
+      await ctx.reply(
+        (getLang(ctx) === 'ru' ? '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u0432\u044b\u0439 % \u043a\u043e\u043c\u0438\u0441\u0441\u0438\u0438 \u0434\u043b\u044f \u043c\u0435\u0434\u0438\u0439\u043a\u0438 (0-100):' : 'Enter new affiliate commission % (0-100):'),
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
+    if (state.step === 'percent') {
+      const pct = Math.min(100, Math.max(0, parseInt(text) || 15));
       editingPromo.delete(userId);
       const p = promoCodes.get(state.code);
       p.discount = state.discount;
-      p.maxUses = maxUses;
+      p.maxUses = state.maxUses || p.maxUses;
+      p.ownerId = state.ownerId !== undefined ? state.ownerId : p.ownerId;
+      p.affiliatePercent = pct;
+      await dbSavePromo(state.code, p);
       await ctx.reply(
-        '\u2705 ' + (getLang(ctx) === 'ru' ? '\u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434' : 'Promo') + ' <b>' + state.code + '</b> ' +
-        (getLang(ctx) === 'ru' ? '\u043e\u0431\u043d\u043e\u0432\u043b\u0451\u043d: \u0441\u043a\u0438\u0434\u043a\u0430' : 'updated:') + ' <b>' + p.discount + '%</b>, ' +
-        (getLang(ctx) === 'ru' ? 'макс. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439' : 'max uses') + ': <b>' + p.maxUses + '</b>',
+        '\u2705 <b>' + state.code + '</b> ' +
+        (getLang(ctx) === 'ru' ? '\u043e\u0431\u043d\u043e\u0432\u043b\u0451\u043d' : 'updated') +
+        '\n\ud83d\udcb0 ' + (getLang(ctx) === 'ru' ? '\u0421\u043a\u0438\u0434\u043a\u0430' : 'Discount') + ': <b>' + p.discount + '%</b>' +
+        '\n\ud83d\udecd ' + (getLang(ctx) === 'ru' ? '\u041c\u0430\u043a\u0441. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439' : 'Max uses') + ': <b>' + p.maxUses + '</b>' +
+        (p.ownerId ? '\n\ud83d\udc64 ' + (getLang(ctx) === 'ru' ? 'ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430' : 'Owner ID') + ': <b>' + p.ownerId + '</b>\n\ud83d\udcb5 ' + (getLang(ctx) === 'ru' ? '\u041a\u043e\u043c\u0438\u0441\u0441\u0438\u044f' : 'Commission') + ': <b>' + pct + '%</b>' : ''),
         { parse_mode: 'HTML' }
       );
       return;
@@ -1093,14 +1118,22 @@ bot.callbackQuery(/^menu_about$/, async (ctx) => {
 bot.callbackQuery(/^menu_admin$/, async (ctx) => {
   if (!ADMIN_IDS.includes(ctx.from.id)) return;
   const t = L[getLang(ctx)];
-  await ctx.editMessageText(t.admin_menu_title, {
+  const available = Object.values(store.keys).filter(k => !k.userId).length;
+  const affiliates = [...promoCodes.values()].filter(p => p.ownerId).length;
+  const header = '\ud83d\udd35 <b>' + (getLang(ctx) === 'ru' ? '\u0410\u0434\u043c\u0438\u043d \u043f\u0430\u043d\u0435\u043b\u044c' : 'Admin Panel') + '</b>\n\n' +
+    '\ud83d\udcca ' + (getLang(ctx) === 'ru' ? '\u041a\u043b\u044e\u0447\u0435\u0439 \u0432 \u043d\u0430\u043b\u0438\u0447\u0438\u0438' : 'Available keys') + ': <b>' + available + '</b> | \ud83c\udfab ' + (getLang(ctx) === 'ru' ? '\u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u043e\u0432' : 'Promos') + ': <b>' + promoCodes.size + '</b> | \ud83d\udc64 ' + (getLang(ctx) === 'ru' ? '\u041c\u0435\u0434\u0438\u0439\u043a\u0438' : 'Affiliates') + ': <b>' + affiliates + '</b>';
+  await ctx.editMessageText(header, {
     parse_mode: 'HTML',
     reply_markup: new InlineKeyboard()
-      .text(t.admin_btn_panel, 'ad_panel').text(t.admin_btn_pending, 'ad_pending').text(t.admin_btn_history, 'ad_history').row()
+      .text('\ud83d\udcca ' + (getLang(ctx) === 'ru' ? '\u0414\u0430\u0448\u0431\u043e\u0440\u0434' : 'Dashboard'), 'ad_panel')
+      .text('\u23f3 ' + (getLang(ctx) === 'ru' ? '\u041e\u0436\u0438\u0434\u0430\u043d\u0438\u0435' : 'Pending'), 'ad_pending')
+      .text('\ud83d\udcc4 ' + (getLang(ctx) === 'ru' ? '\u0418\u0441\u0442\u043e\u0440\u0438\u044f' : 'History'), 'ad_history').row()
       .text('\ud83c\udfaf ' + (getLang(ctx) === 'ru' ? '\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u043f\u0440\u043e\u043c\u043e' : 'Create Promo'), 'ad_createpromo_flow')
-      .text('\u2795 ' + (getLang(ctx) === 'ru' ? '\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043a\u043b\u044e\u0447\u0438' : 'Add Keys'), 'ad_addkeys_flow').row()
-      .text(t.admin_btn_promos, 'ad_promos').text(t.admin_btn_genkeys, 'ad_genkeys').text(t.admin_btn_crypto, 'ad_testcrypto').row()
-      .text('\ud83e\udea8 ' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442 \u0421\u0411\u041f' : 'Test SBP'), 'ad_testplatega').row()
+      .text('\ud83d\udccb ' + (getLang(ctx) === 'ru' ? '\u0412\u0441\u0435 \u043f\u0440\u043e\u043c\u043e' : 'All Promos'), 'ad_promos').row()
+      .text('\u2795 ' + (getLang(ctx) === 'ru' ? '\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043a\u043b\u044e\u0447\u0438' : 'Add Keys'), 'ad_addkeys_flow')
+      .text('\ud83d\udd11 ' + (getLang(ctx) === 'ru' ? '\u0413\u0435\u043d 10' : 'Gen 10'), 'ad_genkeys').row()
+      .text('\ud83e\udea8 ' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442 \u0421\u0411\u041f' : 'Test SBP'), 'ad_testplatega')
+      .text('\ud83d\udcb1 ' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442 Crypto' : 'Test Crypto'), 'ad_testcrypto').row()
       .text(t.back, 'menu_main')
   }).catch(() => {});
   await ctx.answerCallbackQuery();
