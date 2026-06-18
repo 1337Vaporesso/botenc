@@ -6,7 +6,7 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const CRYPTOBOT_TOKEN = process.env.CRYPTOBOT_TOKEN;
 const PLATEGA_MERCHANT_ID = process.env.PLATEGA_MERCHANT_ID || 'ed604fef-1c53-4cb8-aefc-4d57c1df63d3';
 const PLATEGA_SECRET = process.env.PLATEGA_SECRET || 'MdBSbyWSiGFpbzLbvpF31H1fh9sLxnij19ep0fZftfdZ5mB2Q4NptQ8fig6rdKwgURNSZrvqTAKg7cx7skEWQf1W1IiRSn5qTD48';
-const PLATEGA_PRICE = 1;
+const PLATEGA_PRICE = 295;
 const MY_ID = 8006368888;
 const ADMIN_IDS = [MY_ID, ...(process.env.ADMIN_IDS || '').split(',').map(Number).filter(Boolean)];
 const PORT = process.env.PORT || 8080;
@@ -1146,6 +1146,18 @@ bot.command('createpromo', async (ctx) => {
   const maxUses = parseInt(parts[3]) || 1;
   promoCodes.set(code, { code, discount, maxUses, uses: 0, createdBy: ctx.from.id, createdAt: Date.now() });
   await ctx.reply(t.promo_created.replace('{code}', code).replace('{d}', discount).replace('{max}', maxUses), { parse_mode: 'HTML' });
+});
+
+bot.command('testplatega', async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const t = L[getLang(ctx)];
+  const key = issueKey(ctx.from.id, 'test_platega', 'card');
+  addHistory({ key, userId: ctx.from.id, name: ctx.from.first_name || 'test', method: 'card', promo: null });
+  await ctx.reply(
+    '\ud83e\udea8 <b>' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442\u043e\u0432\u0430\u044f Platega \u043e\u043f\u043b\u0430\u0442\u0430 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0430' : 'Test Platega payment confirmed') + '</b>\n\n' +
+    t.success_info.replace('{key}', key),
+    { parse_mode: 'HTML' }
+  );
 });
 
 bot.command('promos', async (ctx) => {
