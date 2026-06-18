@@ -1460,6 +1460,14 @@ bot.command('resetwithdraw', async (ctx) => {
   await ctx.reply(t.resetwithdraw_done.replace('{code}', code), { parse_mode: 'HTML' });
 });
 
+bot.command('id', async (ctx) => {
+  const lang = getLang(ctx);
+  await ctx.reply(
+    '\ud83d\udc64 <b>' + (lang === 'ru' ? '\u0412\u0430\u0448 Telegram ID' : 'Your Telegram ID') + ':</b> <code>' + ctx.from.id + '</code>',
+    { parse_mode: 'HTML' }
+  );
+});
+
 bot.command('history', async (ctx) => {
   if (!ADMIN_IDS.includes(ctx.from.id)) return;
   const t = L[getLang(ctx)];
