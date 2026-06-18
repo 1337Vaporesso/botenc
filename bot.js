@@ -1239,7 +1239,7 @@ app.post('/platega-webhook', async (req, res) => {
     const merchantHeader = req.headers['x-merchantid'];
     const secretHeader = req.headers['x-secret'];
     if (merchantHeader !== PLATEGA_MERCHANT_ID || secretHeader !== PLATEGA_SECRET) {
-      res.status(401).send('unauthorized');
+      res.sendStatus(200);
       return;
     }
     const payload = body.payload || '';
