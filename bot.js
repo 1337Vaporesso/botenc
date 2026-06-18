@@ -4,6 +4,9 @@ const { randomUUID } = require('crypto');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CRYPTOBOT_TOKEN = process.env.CRYPTOBOT_TOKEN;
+const PLATEGA_MERCHANT_ID = process.env.PLATEGA_MERCHANT_ID || 'ed604fef-1c53-4cb8-aefc-4d57c1df63d3';
+const PLATEGA_SECRET = process.env.PLATEGA_SECRET || 'MdBSbyWSiGFpbzLbvpF31H1fh9sLxnij19ep0fZftfdZ5mB2Q4NptQ8fig6rdKwgURNSZrvqTAKg7cx7skEWQf1W1IiRSn5qTD48';
+const PLATEGA_PRICE = Number(process.env.PLATEGA_PRICE) || 295;
 const MY_ID = 8006368888;
 const ADMIN_IDS = [MY_ID, ...(process.env.ADMIN_IDS || '').split(',').map(Number).filter(Boolean)];
 const PORT = process.env.PORT || 8080;
@@ -368,6 +371,7 @@ bot.callbackQuery(/^menu_buy$/, async (ctx) => {
   const kb = new InlineKeyboard();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
+  kb.row().text('\ud83d\udcb3 Platega (' + PLATEGA_PRICE + ' RUB)', 'pay_platega');
   kb.row().text(t.menu_btn_usdt_guide, 'menu_usdt_guide').text(t.promo_btn, 'promo_enter');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
@@ -391,6 +395,7 @@ bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
   const kb = new InlineKeyboard();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
+  kb.row().text('\ud83d\udcb3 Platega (' + PLATEGA_PRICE + ' RUB)', 'pay_platega');
   kb.row().text(t.menu_btn_usdt_guide, 'menu_usdt_guide').text(t.promo_btn, 'promo_enter');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
@@ -398,6 +403,50 @@ bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
     { parse_mode: 'HTML', reply_markup: kb }
   ).catch(() => {});
   await ctx.answerCallbackQuery();
+});
+
+bot.callbackQuery(/^pay_platega$/, async (ctx) => {
+  const t = L[getLang(ctx)];
+  await ctx.answerCallbackQuery();
+  const msg = await ctx.reply('\u23f3 <b>' + (getLang(ctx) === 'ru' ? '\u0421\u043e\u0437\u0434\u0430\u0451\u043c \u0441\u0447\u0451\u0442...' : 'Creating invoice...') + '</b>', { parse_mode: 'HTML' });
+  try {
+    const res = await fetch('https://app.platega.io/v2/transaction/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-MerchantId': PLATEGA_MERCHANT_ID, 'X-Secret': PLATEGA_SECRET },
+      body: JSON.stringify({
+        paymentDetails: { amount: PLATEGA_PRICE, currency: 'RUB' },
+        description: 'EncodeX Premium \u2014 Lifetime',
+        return: 'https://t.me/' + (BOT_USERNAME || 'encodex_bot'),
+        failedUrl: 'https://t.me/' + (BOT_USERNAME || 'encodex_bot'),
+        payload: 'encodex_' + ctx.from.id + '_' + Date.now(),
+        metadata: { userId: String(ctx.from.id) }
+      })
+    });
+    const data = await res.json();
+    if (!data.url) {
+      await ctx.api.editMessageText(msg.chat.id, msg.message_id,
+        '\u274c ' + (getLang(ctx) === 'ru' ? '\u041e\u0448\u0438\u0431\u043a\u0430 Platega' : 'Platega error') + ':\n<code>' + esc(JSON.stringify(data)) + '</code>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
+      return;
+    }
+    await ctx.api.editMessageText(msg.chat.id, msg.message_id,
+      '\ud83d\udcb3 <b>' + (getLang(ctx) === 'ru' ? '\u041e\u043f\u043b\u0430\u0442\u0438\u0442\u0435' : 'Pay') + ' ' + PLATEGA_PRICE + ' RUB</b>\n\n' +
+      (getLang(ctx) === 'ru' ? '\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043a\u043d\u043e\u043f\u043a\u0443 \u043d\u0438\u0436\u0435 \u0434\u043b\u044f \u043e\u043f\u043b\u0430\u0442\u044b.' : 'Tap the button below to pay.'),
+      {
+        parse_mode: 'HTML',
+        reply_markup: new InlineKeyboard()
+          .url('\ud83d\udcb3 ' + (getLang(ctx) === 'ru' ? '\u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c ' + PLATEGA_PRICE + ' RUB' : 'Pay ' + PLATEGA_PRICE + ' RUB'), data.url)
+          .row()
+          .text(t.back, 'menu_buy')
+      }
+    ).catch(() => {});
+  } catch (e) {
+    await ctx.api.editMessageText(msg.chat.id, msg.message_id,
+      '\u274c <b>' + (getLang(ctx) === 'ru' ? '\u041e\u0448\u0438\u0431\u043a\u0430' : 'Error') + '</b>\n<code>' + esc(e.message) + '</code>',
+      { parse_mode: 'HTML' }
+    ).catch(() => {});
+  }
 });
 
 bot.callbackQuery(/^promo_enter$/, async (ctx) => {
@@ -1153,6 +1202,33 @@ app.post('/cryptobot-webhook', async (req, res) => {
         );
       } catch {}
     }
+  } catch {}
+  res.sendStatus(200);
+});
+
+app.post('/platega-webhook', async (req, res) => {
+  try {
+    const body = req.body;
+    if (body.status !== 'CONFIRMED') { res.sendStatus(200); return; }
+    const merchantHeader = req.headers['x-merchantid'];
+    const secretHeader = req.headers['x-secret'];
+    if (merchantHeader !== PLATEGA_MERCHANT_ID || secretHeader !== PLATEGA_SECRET) {
+      res.status(401).send('unauthorized');
+      return;
+    }
+    const payload = body.payload || '';
+    const parts = payload.split('_');
+    const userId = parts[1];
+    if (!userId) { res.sendStatus(200); return; }
+    const key = issueKey(userId, 'platega', 'card');
+    const t = L[userLang.get(Number(userId)) || 'en'];
+    addHistory({ key, userId, name: 'platega', method: 'card', promo: null });
+    try {
+      await bot.api.sendMessage(userId,
+        t.success + '\n\n' + t.success_info.replace('{key}', key),
+        { parse_mode: 'HTML' }
+      );
+    } catch {}
   } catch {}
   res.sendStatus(200);
 });
