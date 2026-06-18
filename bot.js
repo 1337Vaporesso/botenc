@@ -918,6 +918,7 @@ bot.callbackQuery(/^menu_admin$/, async (ctx) => {
       .text('\ud83c\udfaf ' + (getLang(ctx) === 'ru' ? '\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u043f\u0440\u043e\u043c\u043e' : 'Create Promo'), 'ad_createpromo_flow')
       .text('\u2795 ' + (getLang(ctx) === 'ru' ? '\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043a\u043b\u044e\u0447\u0438' : 'Add Keys'), 'ad_addkeys_flow').row()
       .text(t.admin_btn_promos, 'ad_promos').text(t.admin_btn_genkeys, 'ad_genkeys').text(t.admin_btn_crypto, 'ad_testcrypto').row()
+      .text('\ud83e\udea8 ' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442 Platega' : 'Test Platega'), 'ad_testplatega').row()
       .text(t.back, 'menu_main')
   }).catch(() => {});
   await ctx.answerCallbackQuery();
@@ -1158,6 +1159,19 @@ bot.command('testplatega', async (ctx) => {
     t.success_info.replace('{key}', key),
     { parse_mode: 'HTML' }
   );
+});
+
+bot.callbackQuery(/^ad_testplatega$/, async (ctx) => {
+  if (!ADMIN_IDS.includes(ctx.from.id)) return;
+  const t = L[getLang(ctx)];
+  await ctx.answerCallbackQuery();
+  const key = issueKey(ctx.from.id, 'test_platega', 'card');
+  addHistory({ key, userId: ctx.from.id, name: ctx.from.first_name || 'test', method: 'card', promo: null });
+  await ctx.editMessageText(
+    '\ud83e\udea8 <b>' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442\u043e\u0432\u0430\u044f Platega \u043e\u043f\u043b\u0430\u0442\u0430 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0430' : 'Test Platega payment confirmed') + '</b>\n\n' +
+    t.success_info.replace('{key}', key),
+    { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(t.back, 'menu_admin') }
+  ).catch(() => {});
 });
 
 bot.command('promos', async (ctx) => {
