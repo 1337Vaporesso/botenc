@@ -651,7 +651,7 @@ bot.on('message:text', async (ctx) => {
         '\u2705 ' + (getLang(ctx) === 'ru' ? '\u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434' : 'Promo') + ' <b>' + state.name + '</b> ' +
         (getLang(ctx) === 'ru' ? '\u0441\u043e\u0437\u0434\u0430\u043d: \u0441\u043a\u0438\u0434\u043a\u0430' : 'created:') + ' <b>' + state.discount + '%</b>, ' +
         (getLang(ctx) === 'ru' ? 'макс. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439' : 'max uses') + ': <b>' + maxUses + '</b>' +
-        (state.ownerId ? '\n\ud83d\udc64 ' + (getLang(ctx) === 'ru' ? 'ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430:' : 'Owner ID:') + ' <b>' + state.ownerId + '</b>\n\ud83d\udcb0 ' + (getLang(ctx) === 'ru' ? '% \u0430\u0432\u0442\u043e\u0440\u0443:' : 'Affiliate %:') + ' <b>' + (state.affiliatePercent || 15) + '%</b>' : ''),
+        (state.ownerId ? '\n\ud83d\udc64 ' + (getLang(ctx) === 'ru' ? 'ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430:' : 'Owner ID:') + ' <b>' + state.ownerId + '</b>\n\ud83d\udcb5 ' + (getLang(ctx) === 'ru' ? '\u0414\u043e\u0445\u043e\u0434:' : 'Income:') + ' <b>' + (state.affiliatePercent || 15) + '%</b>' : ''),
         { parse_mode: 'HTML' }
       );
       return;
@@ -731,7 +731,7 @@ bot.on('message:text', async (ctx) => {
         (getLang(ctx) === 'ru' ? '\u043e\u0431\u043d\u043e\u0432\u043b\u0451\u043d' : 'updated') +
         '\n\ud83d\udcb0 ' + (getLang(ctx) === 'ru' ? '\u0421\u043a\u0438\u0434\u043a\u0430' : 'Discount') + ': <b>' + p.discount + '%</b>' +
         '\n\ud83d\udecd ' + (getLang(ctx) === 'ru' ? '\u041c\u0430\u043a\u0441. \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0439' : 'Max uses') + ': <b>' + p.maxUses + '</b>' +
-        (p.ownerId ? '\n\ud83d\udc64 ' + (getLang(ctx) === 'ru' ? 'ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430' : 'Owner ID') + ': <b>' + p.ownerId + '</b>\n\ud83d\udcb5 ' + (getLang(ctx) === 'ru' ? '\u041a\u043e\u043c\u0438\u0441\u0441\u0438\u044f' : 'Commission') + ': <b>' + pct + '%</b>' : ''),
+        (p.ownerId ? '\n\ud83d\udc64 ' + (getLang(ctx) === 'ru' ? 'ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430' : 'Owner ID') + ': <b>' + p.ownerId + '</b>\n\ud83d\udcb5 ' + (getLang(ctx) === 'ru' ? '\u0414\u043e\u0445\u043e\u0434' : 'Income') + ': <b>' + pct + '%</b>' : ''),
         { parse_mode: 'HTML' }
       );
       return;
@@ -1376,7 +1376,7 @@ bot.command('createpromo', async (ctx) => {
   const affiliatePercent = parts[5] ? Math.min(100, Math.max(0, parseInt(parts[5]) || 15)) : 15;
   promoCodes.set(code, { code, discount, maxUses, uses: 0, createdBy: ctx.from.id, createdAt: Date.now(), ownerId, affiliatePercent, totalEarned: 0, withdrawn: 0 });
   await dbSavePromo(code, promoCodes.get(code));
-  await ctx.reply(t.promo_created.replace('{code}', code).replace('{d}', discount).replace('{max}', maxUses) + (ownerId ? '\n\ud83d\udc64 ' + (getLang(ctx) === 'ru' ? 'ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430:' : 'Owner ID:') + ' <b>' + ownerId + '</b>\n\ud83d\udcb0 ' + (getLang(ctx) === 'ru' ? '% \u0430\u0432\u0442\u043e\u0440\u0443:' : 'Affiliate %:') + ' <b>' + affiliatePercent + '%</b>' : ''), { parse_mode: 'HTML' });
+  await ctx.reply(t.promo_created.replace('{code}', code).replace('{d}', discount).replace('{max}', maxUses) + (ownerId ? '\n\ud83d\udc64 ' + (getLang(ctx) === 'ru' ? 'ID \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430:' : 'Owner ID:') + ' <b>' + ownerId + '</b>\n\ud83d\udcb5 ' + (getLang(ctx) === 'ru' ? '\u0414\u043e\u0445\u043e\u0434:' : 'Income:') + ' <b>' + affiliatePercent + '%</b>' : ''), { parse_mode: 'HTML' });
 });
 
 bot.command('testplatega', async (ctx) => {
