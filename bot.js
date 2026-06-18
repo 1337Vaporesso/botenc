@@ -6,7 +6,7 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const CRYPTOBOT_TOKEN = process.env.CRYPTOBOT_TOKEN;
 const PLATEGA_MERCHANT_ID = process.env.PLATEGA_MERCHANT_ID || 'ed604fef-1c53-4cb8-aefc-4d57c1df63d3';
 const PLATEGA_SECRET = process.env.PLATEGA_SECRET || 'MdBSbyWSiGFpbzLbvpF31H1fh9sLxnij19ep0fZftfdZ5mB2Q4NptQ8fig6rdKwgURNSZrvqTAKg7cx7skEWQf1W1IiRSn5qTD48';
-const PLATEGA_PRICE = 295;
+const PLATEGA_PRICE = 290;
 const MY_ID = 8006368888;
 const ADMIN_IDS = [MY_ID, ...(process.env.ADMIN_IDS || '').split(',').map(Number).filter(Boolean)];
 const PORT = process.env.PORT || 8080;
@@ -123,7 +123,7 @@ const L = {
     crypto_pay_title: '\ud83d\udc8e CryptoBot (USDT)',
     crypto_pay_info: '<i>Tap the button to pay with CryptoBot</i>',
     pay_usdt: '\ud83d\udcb3 Pay 4 USDT',
-    card_transfer: '\ud83c\udfe6 Card Transfer (Manual)',
+    card_transfer: '\ud83c\udfe6 Card Transfer [UAH]',
     card_transfer_title: '\ud83c\udfe6 Card Transfer',
     card_transfer_info: 'Send <b>150 UAH</b> to the card below, then tap "I paid":\n\n<code>{details}</code>',
     card_transfer_sent: '\u2705 I paid',
@@ -228,7 +228,7 @@ const L = {
     crypto_pay_title: '\ud83d\udc8e CryptoBot (USDT)',
     crypto_pay_info: '<i>\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043a\u043d\u043e\u043f\u043a\u0443 \u0434\u043b\u044f \u043e\u043f\u043b\u0430\u0442\u044b</i>',
     pay_usdt: '\ud83d\udcb3 \u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c 4 USDT',
-    card_transfer: '\ud83c\udfe6 \u041f\u0435\u0440\u0435\u0432\u043e\u0434 \u043d\u0430 \u043a\u0430\u0440\u0442\u0443',
+    card_transfer: '\ud83c\udfe6 \u041f\u0435\u0440\u0435\u0432\u043e\u0434 \u043d\u0430 \u043a\u0430\u0440\u0442\u0443 [UAH]',
     card_transfer_title: '\ud83c\udfe6 \u041f\u0435\u0440\u0435\u0432\u043e\u0434 \u043d\u0430 \u043a\u0430\u0440\u0442\u0443',
     card_transfer_info: '\u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 <b>150 UAH</b> \u043d\u0430 \u043a\u0430\u0440\u0442\u0443 \u043d\u0438\u0436\u0435, \u0437\u0430\u0442\u0435\u043c \u043d\u0430\u0436\u043c\u0438\u0442\u0435 "\u041e\u043f\u043b\u0430\u0442\u0438\u043b":\n\n<code>{details}</code>',
     card_transfer_sent: '\u2705 \u041e\u043f\u043b\u0430\u0442\u0438\u043b',
@@ -371,7 +371,7 @@ bot.callbackQuery(/^menu_buy$/, async (ctx) => {
   const kb = new InlineKeyboard();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
-  kb.row().text('\ud83d\udcb3 Platega (' + PLATEGA_PRICE + ' RUB)', 'pay_platega');
+  kb.row().text('\ud83d\udcb3 \u0421\u0411\u041f [' + PLATEGA_PRICE + ' RUB]', 'pay_platega');
   kb.row().text(t.menu_btn_usdt_guide, 'menu_usdt_guide').text(t.promo_btn, 'promo_enter');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
@@ -395,7 +395,7 @@ bot.callbackQuery(/^buy_lifetime$/, async (ctx) => {
   const kb = new InlineKeyboard();
   if (CRYPTOBOT_TOKEN) kb.text(t.crypto, 'pay_crypto_lifetime');
   kb.text(t.card_transfer, 'pay_card_transfer_lifetime');
-  kb.row().text('\ud83d\udcb3 Platega (' + PLATEGA_PRICE + ' RUB)', 'pay_platega');
+  kb.row().text('\ud83d\udcb3 \u0421\u0411\u041f [' + PLATEGA_PRICE + ' RUB]', 'pay_platega');
   kb.row().text(t.menu_btn_usdt_guide, 'menu_usdt_guide').text(t.promo_btn, 'promo_enter');
   kb.row().text(t.back, 'back_start');
   await ctx.editMessageText(
@@ -425,7 +425,7 @@ bot.callbackQuery(/^pay_platega$/, async (ctx) => {
     const data = await res.json();
     if (!data.url) {
       await ctx.api.editMessageText(msg.chat.id, msg.message_id,
-        '\u274c ' + (getLang(ctx) === 'ru' ? '\u041e\u0448\u0438\u0431\u043a\u0430 Platega' : 'Platega error') + ':\n<code>' + esc(JSON.stringify(data)) + '</code>',
+        '\u274c ' + (getLang(ctx) === 'ru' ? '\u041e\u0448\u0438\u0431\u043a\u0430 \u0421\u0411\u041f' : 'SBP error') + ':\n<code>' + esc(JSON.stringify(data)) + '</code>',
         { parse_mode: 'HTML' }
       ).catch(() => {});
       return;
@@ -918,7 +918,7 @@ bot.callbackQuery(/^menu_admin$/, async (ctx) => {
       .text('\ud83c\udfaf ' + (getLang(ctx) === 'ru' ? '\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u043f\u0440\u043e\u043c\u043e' : 'Create Promo'), 'ad_createpromo_flow')
       .text('\u2795 ' + (getLang(ctx) === 'ru' ? '\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043a\u043b\u044e\u0447\u0438' : 'Add Keys'), 'ad_addkeys_flow').row()
       .text(t.admin_btn_promos, 'ad_promos').text(t.admin_btn_genkeys, 'ad_genkeys').text(t.admin_btn_crypto, 'ad_testcrypto').row()
-      .text('\ud83e\udea8 ' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442 Platega' : 'Test Platega'), 'ad_testplatega').row()
+      .text('\ud83e\udea8 ' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442 \u0421\u0411\u041f' : 'Test SBP'), 'ad_testplatega').row()
       .text(t.back, 'menu_main')
   }).catch(() => {});
   await ctx.answerCallbackQuery();
@@ -1168,10 +1168,10 @@ bot.callbackQuery(/^ad_testplatega$/, async (ctx) => {
   const key = issueKey(ctx.from.id, 'test_platega', 'card');
   addHistory({ key, userId: ctx.from.id, name: ctx.from.first_name || 'test', method: 'card', promo: null });
   await ctx.editMessageText(
-    '\ud83e\udea8 <b>' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442\u043e\u0432\u0430\u044f Platega \u043e\u043f\u043b\u0430\u0442\u0430 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0430' : 'Test Platega payment confirmed') + '</b>\n\n' +
+    '\ud83e\udea8 <b>' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0421\u0411\u041f \u043e\u043f\u043b\u0430\u0442\u0430 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0430' : 'Test SBP payment confirmed') + '</b>\n\n' +
     t.success_info.replace('{key}', key),
-    { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(t.back, 'menu_admin') }
-  ).catch(() => {});
+    { parse_mode: 'HTML' }
+  );
 });
 
 bot.command('promos', async (ctx) => {
