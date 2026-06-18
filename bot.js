@@ -133,7 +133,7 @@ const L = {
     pending_title: '\u23f3 <b>Pending payments:</b>',
     pending_empty: 'No pending payments.',
     success: '\u2705 <b>Payment Successful!</b>',
-    success_info: 'Your key: <code>{key}</code>\n\n\ud83d\udce5 <a href="https://mega.nz/file/kEszVRCQ#zAa912tHNCRqI_GTgniiT2v10OUIwN1wzNDCaF7GG1w"><b>Download EncodeX</b></a>\n\nOpen <b>EncodeX</b> \u2192 <b>Profile</b> \u2192 <b>Activate</b>',
+    success_info: 'Your key: <code>{key}</code>\n\n\ud83d\udce5 <a href="https://mega.nz/file/kEszVRCQ#zAa912tHNCRqI_GTgniiT2v10OUIwN1wzNDCaF7GG1w"><b>Download EncodeX</b></a>\n\n\ud83d\udce2 <b>Updates group:</b> https://t.me/+G2K-uiDLK0NhNWRi\n\nOpen <b>EncodeX</b> \u2192 <b>Profile</b> \u2192 <b>Activate</b>',
     timeout: '\u274c <b>Timeout</b>\nCryptoBot API did not respond in 15s',
     err_no_token: '\u274c Crypto token not configured',
     err_plan: '\u274c CryptoBot error:\n<code>{data}</code>',
@@ -238,7 +238,7 @@ const L = {
     pending_title: '\u23f3 <b>\u041e\u0436\u0438\u0434\u0430\u044e\u0442 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f:</b>',
     pending_empty: '\u041d\u0435\u0442 \u043e\u0436\u0438\u0434\u0430\u044e\u0449\u0438\u0445 \u043f\u043b\u0430\u0442\u0435\u0436\u0435\u0439.',
     success: '\u2705 <b>\u041e\u043f\u043b\u0430\u0442\u0430 \u043f\u0440\u043e\u0448\u043b\u0430!</b>',
-    success_info: '\u041a\u043b\u044e\u0447: <code>{key}</code>\n\n\ud83d\udce5 <a href="https://mega.nz/file/kEszVRCQ#zAa912tHNCRqI_GTgniiT2v10OUIwN1wzNDCaF7GG1w"><b>\u0421\u043a\u0430\u0447\u0430\u0442\u044c EncodeX</b></a>\n\n\u041e\u0442\u043a\u0440\u043e\u0439\u0442\u0435 <b>EncodeX</b> \u2192 <b>\u041f\u0440\u043e\u0444\u0438\u043b\u044c</b> \u2192 <b>\u0410\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u044f</b>',
+    success_info: '\u041a\u043b\u044e\u0447: <code>{key}</code>\n\n\ud83d\udce5 <a href="https://mega.nz/file/kEszVRCQ#zAa912tHNCRqI_GTgniiT2v10OUIwN1wzNDCaF7GG1w"><b>\u0421\u043a\u0430\u0447\u0430\u0442\u044c EncodeX</b></a>\n\n\ud83d\udce2 <b>\u0413\u0440\u0443\u043f\u043f\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0439:</b> https://t.me/+G2K-uiDLK0NhNWRi\n\n\u041e\u0442\u043a\u0440\u043e\u0439\u0442\u0435 <b>EncodeX</b> \u2192 <b>\u041f\u0440\u043e\u0444\u0438\u043b\u044c</b> \u2192 <b>\u0410\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u044f</b>',
     timeout: '\u274c <b>\u0422\u0430\u0439\u043c\u0430\u0443\u0442</b>\nCryptoBot API \u043d\u0435 \u043e\u0442\u0432\u0435\u0442\u0438\u043b \u0437\u0430 15\u0441',
     err_no_token: '\u274c \u0422\u043e\u043a\u0435\u043d Crypto \u043d\u0435 \u043d\u0430\u0441\u0442\u0440\u043e\u0435\u043d',
     err_plan: '\u274c \u041e\u0448\u0438\u0431\u043a\u0430 CryptoBot:\n<code>{data}</code>',
@@ -830,6 +830,7 @@ bot.callbackQuery(/^menu_profile$/, async (ctx) => {
     t.profile_name.replace('{name}', esc(ctx.from.first_name || 'User')) + '\n' +
     (getLang(ctx) === 'ru' ? '\ud83c\udf10 \u042f\u0437\u044b\u043a: <b>\u0420\u0443\u0441\u0441\u043a\u0438\u0439</b>' : t.profile_lang) + '\n' +
     (premium ? t.profile_status_premium : ADMIN_IDS.includes(id) ? '\ud83d\udd34 <b>ADMIN</b>' : t.profile_status) + '\n\n' +
+    (premium || ADMIN_IDS.includes(id) ? '\ud83d\udce2 ' + (getLang(ctx) === 'ru' ? '\u0413\u0440\u0443\u043f\u043f\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0439:' : 'Updates group:') + ' https://t.me/+G2K-uiDLK0NhNWRi\n\n' : '') +
     (premium ? '' : t.profile_no_keys);
   await ctx.editMessageText(txt, {
     parse_mode: 'HTML',
