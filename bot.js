@@ -15,7 +15,8 @@ const BOT_USERNAME = process.env.BOT_USERNAME || '';
 const WEBHOOK_DOMAIN = process.env.WEBHOOK_DOMAIN || '';
 const CARD_DETAILS = process.env.CARD_DETAILS || '4323 3870 2556 7002';
 
-const dbPool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }) : null;
+const dbPool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, max: 1, idleTimeoutMillis: 30000, connectionTimeoutMillis: 5000 }) : null;
+if (dbPool) { dbPool.on('error', e => console.error('DB pool error (ignored):', e.message)); }
 
 function genKey() {
   const r = () => randomUUID().slice(0, 4).toUpperCase();
