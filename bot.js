@@ -1,6 +1,7 @@
 const express = require('express');
 const { Bot, InlineKeyboard, webhookCallback } = require('grammy');
 const { randomUUID } = require('crypto');
+const { Pool } = require('pg');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CRYPTOBOT_TOKEN = process.env.CRYPTOBOT_TOKEN;
@@ -14,6 +15,8 @@ const BOT_USERNAME = process.env.BOT_USERNAME || '';
 const WEBHOOK_DOMAIN = process.env.WEBHOOK_DOMAIN || '';
 const CARD_DETAILS = process.env.CARD_DETAILS || '4323 3870 2556 7002';
 
+const dbPool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }) : null;
+
 function genKey() {
   const r = () => randomUUID().slice(0, 4).toUpperCase();
   return 'ENCODEX-' + r() + '-' + r() + '-' + r() + '-' + r();
@@ -21,15 +24,18 @@ function genKey() {
 
 const store = { keys: {}, total: 0, sold: 0 };
 
-function saveKey(key, userId, name, method) {
+async function saveKey(key, userId, name, method) {
   if (store.keys[key]) return false;
   store.keys[key] = { key, userId, name, method, time: Date.now() };
   store.total++;
   if (userId) store.sold++;
+  if (dbPool) {
+    try { await dbPool.query('INSERT INTO bot_keys (key_id, user_id, name, method, time) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (key_id) DO UPDATE SET user_id=$2,name=$3,method=$4,time=$5', [key, userId || null, name || null, method || null, store.keys[key].time]); } catch {}
+  }
   return true;
 }
 
-function issueKey(userId, name, method) {
+async function issueKey(userId, name, method) {
   for (const k in store.keys) {
     if (!store.keys[k].userId) {
       const entry = store.keys[k];
@@ -37,6 +43,9 @@ function issueKey(userId, name, method) {
       entry.name = name;
       entry.method = method;
       store.sold++;
+      if (dbPool) {
+        try { await dbPool.query('UPDATE bot_keys SET user_id=$1,name=$2,method=$3,time=$4 WHERE key_id=$5', [userId, name, method, Date.now(), entry.key]); } catch {}
+      }
       return entry.key;
     }
   }
@@ -44,6 +53,9 @@ function issueKey(userId, name, method) {
   store.keys[key] = { key, userId, name, method, time: Date.now() };
   store.total++;
   store.sold++;
+  if (dbPool) {
+    try { await dbPool.query('INSERT INTO bot_keys (key_id, user_id, name, method, time) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (key_id) DO UPDATE SET user_id=$2,name=$3,method=$4,time=$5', [key, userId, name, method, store.keys[key].time]); } catch {}
+  }
   return key;
 }
 
@@ -61,7 +73,12 @@ const editingPromo = new Map();
 const deletingPromo = new Map();
 const importingKeys = new Set();
 
-function addHistory(entry) { purchaseHistory.push({ time: Date.now(), ...entry }); }
+function addHistory(entry) {
+  purchaseHistory.push({ time: Date.now(), ...entry });
+  if (dbPool) {
+    try { dbPool.query('INSERT INTO bot_history (key_id, user_id, name, method, promo, time) VALUES ($1,$2,$3,$4,$5,$6)', [entry.key, entry.userId || null, entry.name || null, entry.method || null, entry.promo || null, Date.now()]).catch(() => {}); } catch {}
+  }
+}
 
 function applyPromo(userId, base) {
   const code = userPromo.get(userId);
@@ -74,6 +91,62 @@ function applyPromo(userId, base) {
 const pendingPayments = new Map();
 let pendingIdCounter = 0;
 const awaitingReceipt = new Set();
+
+async function dbSavePromo(code, p) {
+  if (!dbPool) return;
+  try { await dbPool.query('INSERT INTO bot_promos (code, discount, max_uses, uses, created_by, created_at) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (code) DO UPDATE SET discount=$2,max_uses=$3,uses=$4', [code, p.discount, p.maxUses, p.uses, p.createdBy || null, p.createdAt || null]); } catch {}
+}
+
+async function dbDeletePromo(code) {
+  if (!dbPool) return;
+  try { await dbPool.query('DELETE FROM bot_promos WHERE code=$1', [code]); } catch {}
+}
+
+async function dbSavePending(id, p) {
+  if (!dbPool) return;
+  try { await dbPool.query('INSERT INTO bot_pending (id, user_id, name, method, amount, promo_code, message_id, receipt_file_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO UPDATE SET user_id=$2,name=$3,method=$4,amount=$5,promo_code=$6,message_id=$7,receipt_file_id=$8', [id, p.userId, p.name, p.method, p.amount || null, p.promoCode || null, p.messageId || null, p.receiptFileId || null]); } catch {}
+}
+
+async function dbDeletePending(id) {
+  if (!dbPool) return;
+  try { await dbPool.query('DELETE FROM bot_pending WHERE id=$1', [id]); } catch {}
+}
+
+async function loadFromDb() {
+  if (!dbPool) return;
+  try {
+    await dbPool.query(`CREATE TABLE IF NOT EXISTS bot_keys (key_id TEXT PRIMARY KEY, user_id TEXT, name TEXT, method TEXT, time BIGINT NOT NULL)`);
+    await dbPool.query(`CREATE TABLE IF NOT EXISTS bot_promos (code TEXT PRIMARY KEY, discount INT NOT NULL, max_uses INT NOT NULL, uses INT NOT NULL DEFAULT 0, created_by BIGINT, created_at BIGINT)`);
+    await dbPool.query(`CREATE TABLE IF NOT EXISTS bot_history (id SERIAL PRIMARY KEY, key_id TEXT, user_id TEXT, name TEXT, method TEXT, promo TEXT, time BIGINT NOT NULL)`);
+    await dbPool.query(`CREATE TABLE IF NOT EXISTS bot_pending (id TEXT PRIMARY KEY, user_id TEXT, name TEXT, method TEXT, amount INT, promo_code TEXT, message_id BIGINT, receipt_file_id TEXT)`);
+
+    const keysRes = await dbPool.query('SELECT * FROM bot_keys');
+    for (const row of keysRes.rows) {
+      store.keys[row.key_id] = { key: row.key_id, userId: row.user_id, name: row.name, method: row.method, time: row.time };
+      store.total++;
+      if (row.user_id) store.sold++;
+    }
+
+    const promosRes = await dbPool.query('SELECT * FROM bot_promos');
+    for (const row of promosRes.rows) {
+      promoCodes.set(row.code, { code: row.code, discount: row.discount, maxUses: row.max_uses, uses: row.uses, createdBy: row.created_by, createdAt: row.created_at });
+    }
+
+    const histRes = await dbPool.query('SELECT * FROM bot_history ORDER BY id');
+    for (const row of histRes.rows) {
+      purchaseHistory.push({ time: row.time, key: row.key_id, userId: row.user_id, name: row.name, method: row.method, promo: row.promo });
+    }
+
+    const pendingRes = await dbPool.query('SELECT * FROM bot_pending');
+    for (const row of pendingRes.rows) {
+      pendingPayments.set(row.id, { userId: row.user_id, name: row.name, method: row.method, amount: row.amount, promoCode: row.promo_code, messageId: row.message_id, receiptFileId: row.receipt_file_id });
+      const numId = parseInt(row.id);
+      if (numId >= pendingIdCounter) pendingIdCounter = numId + 1;
+    }
+
+    console.log('DB loaded: ' + store.total + ' keys, ' + promoCodes.size + ' promos, ' + purchaseHistory.length + ' history, ' + pendingPayments.size + ' pending');
+  } catch (e) { console.error('DB load error:', e.message); }
+}
 
 const bot = new Bot(BOT_TOKEN);
 
@@ -488,7 +561,7 @@ bot.on('message:text', async (ctx) => {
     for (const raw of parts) {
       const key = raw.trim().toUpperCase();
       if (key.length < 5) continue;
-      if (saveKey(key)) imported++; else dups++;
+      if (await saveKey(key)) imported++; else dups++;
     }
     await ctx.reply(
       '\u2705 ' + (getLang(ctx) === 'ru' ? '\u0418\u043c\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043e' : 'Imported') + ' <b>' + imported + '</b> ' +
@@ -534,6 +607,7 @@ bot.on('message:text', async (ctx) => {
       const maxUses = parseInt(text) || 1;
       creatingPromo.delete(userId);
       promoCodes.set(state.name, { code: state.name, discount: state.discount, maxUses, uses: 0, createdBy: userId, createdAt: Date.now() });
+      await dbSavePromo(state.name, promoCodes.get(state.name));
       await ctx.reply(
         '\u2705 ' + (getLang(ctx) === 'ru' ? '\u041f\u0440\u043e\u043c\u043e\u043a\u043e\u0434' : 'Promo') + ' <b>' + state.name + '</b> ' +
         (getLang(ctx) === 'ru' ? '\u0441\u043e\u0437\u0434\u0430\u043d: \u0441\u043a\u0438\u0434\u043a\u0430' : 'created:') + ' <b>' + state.discount + '%</b>, ' +
@@ -608,7 +682,9 @@ bot.on('message:text', async (ctx) => {
       await ctx.reply(t.promo_delete_fail.replace('{code}', code), { parse_mode: 'HTML' });
       return;
     }
-    promoCodes.delete(code);
+  promoCodes.delete(code);
+  await dbDeletePromo(code);
+    await dbDeletePromo(code);
     await ctx.reply(t.promo_deleted.replace('{code}', code), { parse_mode: 'HTML' });
     return;
   }
@@ -740,6 +816,7 @@ bot.on(':photo', async (ctx) => {
   const promoCode = userPromo.get(userId) || null;
   const msg = await ctx.reply(t.card_transfer_await.replace('{id}', id), { parse_mode: 'HTML' });
   pendingPayments.set(id, { id, userId, name: ctx.from.first_name || 'User', lang, promoCode, photoMsgId: msg.message_id, chatId: msg.chat.id });
+  await dbSavePending(String(id), pendingPayments.get(id));
 
   const fileId = ctx.msg.photo[ctx.msg.photo.length - 1].file_id;
   for (const adminId of ADMIN_IDS) {
@@ -760,10 +837,11 @@ bot.callbackQuery(/^approve_payment_(\d+)$/, async (ctx) => {
   const p = pendingPayments.get(id);
   if (!p) { await ctx.answerCallbackQuery('Not found'); return; }
   pendingPayments.delete(id);
+  await dbDeletePending(String(id));
   const t = L[p.lang || 'en'];
-  const key = issueKey(String(p.userId), p.name, 'card_transfer');
+  const key = await issueKey(String(p.userId), p.name, 'card_transfer');
 
-  if (p.promoCode && promoCodes.has(p.promoCode)) promoCodes.get(p.promoCode).uses++;
+  if (p.promoCode && promoCodes.has(p.promoCode)) { promoCodes.get(p.promoCode).uses++; await dbSavePromo(p.promoCode, promoCodes.get(p.promoCode)); }
   addHistory({ key, userId: String(p.userId), name: p.name, method: 'card_transfer', promo: p.promoCode || null });
 
   try {
@@ -784,6 +862,7 @@ bot.callbackQuery(/^reject_payment_(\d+)$/, async (ctx) => {
   const p = pendingPayments.get(id);
   if (!p) { await ctx.answerCallbackQuery('Not found'); return; }
   pendingPayments.delete(id);
+  await dbDeletePending(String(id));
   const t = L[p.lang || 'en'];
   try {
     await bot.api.sendMessage(p.userId,
@@ -1018,7 +1097,7 @@ bot.callbackQuery(/^ad_genkeys$/, async (ctx) => {
   if (!ADMIN_IDS.includes(ctx.from.id)) return;
   const t = L[getLang(ctx)];
   const keys = [];
-  for (let i = 0; i < 10; i++) { const k = genKey(); saveKey(k); keys.push(k); }
+  for (let i = 0; i < 10; i++) { const k = genKey(); await saveKey(k); keys.push(k); }
   await ctx.editMessageText(t.genkeys.replace('{keys}', keys.join('\n')), { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text(t.back, 'menu_admin') }).catch(() => {});
   await ctx.answerCallbackQuery();
 });
@@ -1099,7 +1178,7 @@ bot.command('genkeys', async (ctx) => {
   if (!ADMIN_IDS.includes(ctx.from.id)) return;
   const t = L[getLang(ctx)];
   const keys = [];
-  for (let i = 0; i < 10; i++) { const k = genKey(); saveKey(k); keys.push(k); }
+  for (let i = 0; i < 10; i++) { const k = genKey(); await saveKey(k); keys.push(k); }
   await ctx.reply(t.genkeys.replace('{keys}', keys.join('\n')), { parse_mode: 'HTML' });
 });
 
@@ -1158,13 +1237,14 @@ bot.command('createpromo', async (ctx) => {
   const discount = Math.min(100, Math.max(1, parseInt(parts[2]) || 0));
   const maxUses = parseInt(parts[3]) || 1;
   promoCodes.set(code, { code, discount, maxUses, uses: 0, createdBy: ctx.from.id, createdAt: Date.now() });
+  await dbSavePromo(code, promoCodes.get(code));
   await ctx.reply(t.promo_created.replace('{code}', code).replace('{d}', discount).replace('{max}', maxUses), { parse_mode: 'HTML' });
 });
 
 bot.command('testplatega', async (ctx) => {
   if (!ADMIN_IDS.includes(ctx.from.id)) return;
   const t = L[getLang(ctx)];
-  const key = issueKey(ctx.from.id, 'test_platega', 'card');
+  const key = await issueKey(ctx.from.id, 'test_platega', 'card');
   addHistory({ key, userId: ctx.from.id, name: ctx.from.first_name || 'test', method: 'card', promo: null });
   await ctx.reply(
     '\ud83e\udea8 <b>' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0421\u0411\u041f \u043e\u043f\u043b\u0430\u0442\u0430 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0430' : 'Test SBP payment confirmed') + '</b>\n\n' +
@@ -1177,7 +1257,7 @@ bot.callbackQuery(/^ad_testplatega$/, async (ctx) => {
   if (!ADMIN_IDS.includes(ctx.from.id)) return;
   const t = L[getLang(ctx)];
   await ctx.answerCallbackQuery();
-  const key = issueKey(ctx.from.id, 'test_platega', 'card');
+  const key = await issueKey(ctx.from.id, 'test_platega', 'card');
   addHistory({ key, userId: ctx.from.id, name: ctx.from.first_name || 'test', method: 'card', promo: null });
   await ctx.editMessageText(
     '\ud83e\udea8 <b>' + (getLang(ctx) === 'ru' ? '\u0422\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0421\u0411\u041f \u043e\u043f\u043b\u0430\u0442\u0430 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0430' : 'Test SBP payment confirmed') + '</b>\n\n' +
@@ -1229,9 +1309,9 @@ app.post('/cryptobot-webhook', async (req, res) => {
       const parts = payload.split('_');
       const userId = parts[2];
       const promoCode = parts.length > 3 ? parts.slice(3).join('_') : null;
-      const key = issueKey(userId, 'crypto', 'cryptobot');
+      const key = await issueKey(userId, 'crypto', 'cryptobot');
       const t = L[userLang.get(Number(userId)) || 'en'];
-      if (promoCode && promoCodes.has(promoCode)) promoCodes.get(promoCode).uses++;
+      if (promoCode && promoCodes.has(promoCode)) { promoCodes.get(promoCode).uses++; await dbSavePromo(promoCode, promoCodes.get(promoCode)); }
       addHistory({ key, userId, name: 'crypto', method: 'cryptobot', promo: promoCode || null });
       try {
         await bot.api.sendMessage(userId,
@@ -1259,9 +1339,9 @@ app.post('/platega-webhook', async (req, res) => {
     const userId = parts[1];
     const promoCode = parts.length > 2 ? parts.slice(2).join('_') : null;
     if (!userId) { res.sendStatus(200); return; }
-    const key = issueKey(userId, 'platega', 'card');
+    const key = await issueKey(userId, 'platega', 'card');
     const t = L[userLang.get(Number(userId)) || 'en'];
-    if (promoCode && promoCodes.has(promoCode)) promoCodes.get(promoCode).uses++;
+    if (promoCode && promoCodes.has(promoCode)) { promoCodes.get(promoCode).uses++; await dbSavePromo(promoCode, promoCodes.get(promoCode)); }
     addHistory({ key, userId, name: 'platega', method: 'card', promo: promoCode });
     try {
       await bot.api.sendMessage(userId,
@@ -1275,17 +1355,19 @@ app.post('/platega-webhook', async (req, res) => {
 
 app.get('/', (req, res) => res.send('EncodeX Bot'));
 
-if (WEBHOOK_DOMAIN) {
-  app.post('/webhook', webhookCallback(bot, 'express'));
-  const url = (WEBHOOK_DOMAIN.startsWith('http') ? '' : 'https://') + WEBHOOK_DOMAIN + '/webhook';
-  bot.api.setWebhook(url, { drop_pending_updates: true }).then(() => {
-    console.log('Webhook set to ' + url);
-    app.listen(PORT, () => console.log('Bot on port ' + PORT));
-  }).catch(e => { console.error('Webhook failed:', e.message); process.exit(1); });
-} else {
-  bot.api.deleteWebhook({ drop_pending_updates: true }).then(() => {
-    app.listen(PORT, () => { console.log('Bot on port ' + PORT); setTimeout(() => bot.start().catch(e => console.error(e.message)), 3000); });
-  }).catch(() => {
-    app.listen(PORT, () => { console.log('Bot on port ' + PORT); setTimeout(() => bot.start().catch(e => console.error(e.message)), 3000); });
-  });
-}
+loadFromDb().then(() => {
+  if (WEBHOOK_DOMAIN) {
+    app.post('/webhook', webhookCallback(bot, 'express'));
+    const url = (WEBHOOK_DOMAIN.startsWith('http') ? '' : 'https://') + WEBHOOK_DOMAIN + '/webhook';
+    bot.api.setWebhook(url, { drop_pending_updates: true }).then(() => {
+      console.log('Webhook set to ' + url);
+      app.listen(PORT, () => console.log('Bot on port ' + PORT));
+    }).catch(e => { console.error('Webhook failed:', e.message); process.exit(1); });
+  } else {
+    bot.api.deleteWebhook({ drop_pending_updates: true }).then(() => {
+      app.listen(PORT, () => { console.log('Bot on port ' + PORT); setTimeout(() => bot.start().catch(e => console.error(e.message)), 3000); });
+    }).catch(() => {
+      app.listen(PORT, () => { console.log('Bot on port ' + PORT); setTimeout(() => bot.start().catch(e => console.error(e.message)), 3000); });
+    });
+  }
+});
